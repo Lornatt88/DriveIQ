@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pymongo[srv]
+dnspython
+python-dotenv
+numpy
+pandas
+pydantic[email]
+python-jose[cryptography]
+passlib[bcrypt]
+joblib

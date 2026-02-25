@@ -1,0 +1,53 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Data Files
+ml-model/notebooks/data/
+datasets/
+
+# VSCode
+*.code-workspace
+.vscode/
+
+# Frontend Dependencies
+frontend/node_modules/
+node_modules/
+
+# Expo
+frontend/.expo/web/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# ML Model Artifacts (large files)
+*.pkl
+*.h5
+*.keras
+*.joblib
+*.model
+ml-model/models/
+
+# ML Prediction Outputs & Data
+ml-model/notebooks/data/
+ml-model/notebooks/motor_predictions_all_windows.csv
+ml-model/notebooks/secondary_predictions_all_windows.csv
+ml-model/notebooks/motor_window_features_10Hz_KNN_ready.csv
+ml-model/notebooks/secondary_window_features_10Hz_KNN_ready.csv
