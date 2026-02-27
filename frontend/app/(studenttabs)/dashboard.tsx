@@ -6,12 +6,12 @@ import {
   ScrollView,
   Pressable,
   useWindowDimensions,
-  TextInput,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { apiGet, apiPost } from "../../lib/api";
+import { apiGet } from "../../lib/api";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type ReportStatus = "Passed" | "Needs Improvement";
 
@@ -46,6 +46,8 @@ type Achievement = {
   earned: boolean;
 };
 
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function Dashboard() {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
@@ -53,109 +55,56 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [dash, setDash] = useState<any>(null);
 
-  const [joinCode, setJoinCode] = useState("");
-  const [joining, setJoining] = useState(false);
-
   async function loadDashboard() {
     try {
       setLoading(true);
       const data = await apiGet("/dashboard/trainee");
       setDash(data);
     } catch {
-      // If request fails, we show join UI (or mock)
       setDash(null);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
 
-  // ✅ Refresh when user returns to this tab
   useFocusEffect(
-    useCallback(() => {
-      loadDashboard();
-    }, [])
+    useCallback(() => { loadDashboard(); }, [])
   );
 
-  async function onJoin() {
-    const code = joinCode.trim().toUpperCase();
-    if (!code) {
-      Alert.alert("Join Code", "Please enter your join code.");
-      return;
-    }
-
-    try {
-      setJoining(true);
-      await apiPost("/trainee/join", { join_code: code });
-      Alert.alert("Success", "You’re linked to your instructor ✅");
-      setJoinCode("");
-      await loadDashboard();
-    } catch (e: any) {
-      Alert.alert("Join Failed", e?.message || "Invalid join code");
-    } finally {
-      setJoining(false);
-    }
-  }
-
-  // ✅ Correct linked logic based on YOUR backend response:
-  // return includes: link: { is_linked: bool, instructor: {...}|null }
-  const isLinked = !!dash?.link?.is_linked;
-
+  // ── Data derivations ──────────────────────────────────────────────────────
   const studentName = dash?.welcome?.name ?? "Zaid Osama";
-
   const sessionsCompleted = dash?.progress?.sessions_completed ?? 6;
   const sessionsTotal = dash?.progress?.target_sessions ?? 10;
   const completedPct = Math.round((sessionsCompleted / Math.max(1, sessionsTotal)) * 100);
-
   const currentDrivingScore = dash?.progress?.current_score ?? 78;
   const scoreLabel = dash?.welcome?.badge ?? "Improving";
-  const goalText =
-    dash?.progress?.goal_text ?? "Reach 80% to unlock your Safe Driver badge";
+  const goalText = dash?.progress?.goal_text ?? "Reach 80% to unlock your Safe Driver badge";
+  const instructorName = dash?.link?.instructor?.name ?? dash?.link?.instructor?.instructor_name ?? "—";
 
-  const instructorName =
-    dash?.link?.instructor?.name ?? dash?.link?.instructor?.instructor_name ?? "—";
-
-  // Upcoming session: backend currently doesn't send upcoming_session,
-  // so we keep your existing fallback behavior.
   const upcoming = useMemo(() => {
     const u = dash?.upcoming_session;
-    const dateISO =
-      u?.dateISO ||
-      u?.date_iso ||
-      u?.date ||
-      "2026-11-16";
-
-    const dateLabel =
-      u?.dateLabel ||
-      u?.date_label ||
-      (dateISO ? new Date(dateISO).toLocaleDateString() : "—");
-
+    const dateISO = u?.dateISO || u?.date_iso || u?.date || "2026-11-16";
+    const dateLabel = u?.dateLabel || u?.date_label || (dateISO ? new Date(dateISO).toLocaleDateString() : "—");
     const timeLabel = u?.timeLabel || u?.time_label || u?.time || "2:00 PM";
     const instructor = u?.instructor || u?.instructor_name || instructorName || "—";
     const vehicle = u?.vehicle || u?.vehicle_id || "VEH-2847";
-
     return { dateISO, dateLabel, timeLabel, instructor, vehicle };
   }, [dash, instructorName]);
 
   const countdownLabel = useMemo(() => {
     const now = new Date();
     const d = new Date(upcoming.dateISO + "T00:00:00");
-    const ms =
-      d.getTime() -
-      new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const ms = d.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const days = Math.round(ms / (1000 * 60 * 60 * 24));
-
     if (Number.isNaN(days)) return "—";
-    if (days > 1) return `${days} days until your next session`;
-    if (days === 1) return `1 day until your next session`;
-    if (days === 0) return `Today`;
-    return `Session date passed`;
+    if (days > 1) return `${days} days away`;
+    if (days === 1) return "Tomorrow";
+    if (days === 0) return "Today";
+    return "Session passed";
   }, [upcoming.dateISO]);
 
-  // Reports from backend: /dashboard/trainee returns recent_reports (results docs)
   const reports: RecentReport[] = useMemo(() => {
     const list = Array.isArray(dash?.recent_reports) ? dash.recent_reports : null;
     if (!list) {
@@ -165,47 +114,24 @@ export default function Dashboard() {
         { id: "rep3", date: "Nov 9, 2025", instructor: "Sarah Johnson", score: 65, status: "Needs Improvement" },
       ];
     }
-
     return list.map((r: any, idx: number) => {
       const score = r?.score?.overall ?? r?.score ?? 0;
       const status: ReportStatus = score >= 70 ? "Passed" : "Needs Improvement";
-
-      const date =
-        r?.date_label ||
-        r?.date ||
-        (r?.created_at ? new Date(r.created_at).toLocaleDateString() : "—");
-
-      // results docs usually have instructor_id, not instructor name,
-      // so we fallback to linked instructor name.
-      const instructor =
-        r?.instructor_name ||
-        r?.instructor ||
-        instructorName ||
-        "—";
-
-      return {
-        id: r?.id || r?._id || r?.trip_id || `rep-${idx}`,
-        date,
-        instructor,
-        score,
-        status,
-      };
+      const date = r?.date_label || r?.date || (r?.created_at ? new Date(r.created_at).toLocaleDateString() : "—");
+      const instructor = r?.instructor_name || r?.instructor || instructorName || "—";
+      return { id: r?.id || r?._id || r?.trip_id || `rep-${idx}`, date, instructor, score, status };
     });
   }, [dash, instructorName]);
 
-  // AI feedback from backend returns list of tips: [{priority,title,message}]
   const feedback: FeedbackArea[] = useMemo(() => {
     const list = Array.isArray(dash?.ai_feedback) ? dash.ai_feedback : null;
     if (!list) {
       return [
-        { id: "f1", title: "Braking", score: 65, hint: "Work on smoother braking", icon: "↗️" },
-        { id: "f2", title: "Lane Discipline", score: 70, hint: "Practice lane discipline", icon: "🧿" },
+        { id: "f1", title: "Braking", score: 65, hint: "Work on smoother braking", icon: "📈" },
+        { id: "f2", title: "Lane Discipline", score: 70, hint: "Practice lane discipline", icon: "🎯" },
         { id: "f3", title: "Speed Control", score: 82, hint: "Maintain consistent speed", icon: "📊" },
       ];
     }
-
-    // Your backend tips have no numeric score per tip (they are messages),
-    // so we show "score" as 0 and still display the hint text.
     return list.map((f: any, idx: number) => ({
       id: f?.id || `f-${idx}`,
       title: f?.title || f?.area || "Tip",
@@ -225,11 +151,7 @@ export default function Dashboard() {
     }
     return list.map((c: any, idx: number) => ({
       id: c?.id || `c-${idx}`,
-      date: c?.date
-        ? c.date
-        : c?.created_at
-        ? new Date(c.created_at).toLocaleDateString()
-        : "—",
+      date: c?.date ? c.date : c?.created_at ? new Date(c.created_at).toLocaleDateString() : "—",
       text: c?.text || c?.comment || "",
       rating: c?.rating ?? 4.0,
     }));
@@ -254,191 +176,147 @@ export default function Dashboard() {
     }));
   }, [dash]);
 
-  const onReschedule = () => {
-    router.push("/(studenttabs)/sessions");
-  };
+  const onReschedule = () => router.push("/(studenttabs)/sessions");
+  const onViewReport = (_reportId: string) => router.push("/(studenttabs)/reports");
 
-  const onViewReport = (_reportId: string) => {
-    router.push("/(studenttabs)/reports");
-  };
+  // ── Score badge color ─────────────────────────────────────────────────────
+  const scoreBadgeColor =
+    currentDrivingScore >= 85 ? "#16A34A" :
+    currentDrivingScore >= 70 ? "#2563EB" : "#DC2626";
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.centerText}>Loading dashboard…</Text>
+      <View style={s.center}>
+        <ActivityIndicator size="large" color="#6D28D9" />
+        <Text style={s.centerText}>Loading dashboard…</Text>
       </View>
     );
   }
 
-  if (!isLinked) {
-    return (
-      <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-        <View style={styles.hero}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.heroHello}>Welcome 👋</Text>
-            <Text style={styles.heroSub}>
-              Enter your instructor join code to unlock your dashboard.
-            </Text>
-          </View>
-          <View style={styles.heroIconBubble}>
-            <Text style={styles.heroIcon}>🔗</Text>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🔗 Join Instructor</Text>
-
-          <Text style={styles.joinLabel}>Join Code</Text>
-          <TextInput
-            value={joinCode}
-            onChangeText={setJoinCode}
-            placeholder="e.g. J4F9A2C"
-            autoCapitalize="characters"
-            style={styles.joinInput}
-          />
-
-          <Pressable
-            onPress={onJoin}
-            disabled={joining}
-            style={({ pressed }) => [
-              styles.joinBtn,
-              joining ? { opacity: 0.6 } : null,
-              pressed ? { opacity: 0.9 } : null,
-            ]}
-          >
-            <Text style={styles.joinBtnText}>
-              {joining ? "Joining..." : "Join"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={loadDashboard}
-            style={({ pressed }) => [styles.refreshBtn, pressed ? { opacity: 0.9 } : null]}
-          >
-            <Text style={styles.refreshBtnText}>↻ Refresh</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    );
-  }
-
+  // ── Main dashboard ────────────────────────────────────────────────────────
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
+    <ScrollView style={s.page} contentContainerStyle={s.content}>
+
+      {/* ── 1. Hero ───────────────────────────────────────────────────────── */}
+      <View style={s.hero}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.heroHello}>Hello, {studentName} 👋</Text>
-          <Text style={styles.heroSub}>
-            Great to see you back! Let&apos;s keep improving your driving skills.
+          <Text style={s.heroHello}>Hello, {studentName} 👋</Text>
+          <Text style={s.heroSub}>
+            Great to see you back! Let's keep improving your driving skills.
           </Text>
-          {/* ✅ show linked instructor (small demo win) */}
-          <Text style={styles.heroSub}>Instructor: {instructorName}</Text>
+          <Text style={[s.heroSub, { marginTop: 4 }]}>
+            Instructor: {instructorName}
+          </Text>
         </View>
-        <View style={styles.heroIconBubble}>
-          <Text style={styles.heroIcon}>🚗</Text>
+        <View style={s.heroIconBubble}>
+          <Text style={s.heroIconText}>🚗</Text>
         </View>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>🏆  Your Progress</Text>
-        </View>
+      {/* ── 2. Progress ──────────────────────────────────────────────────── */}
+      <View style={s.card}>
+        <SectionHeader icon="🏆" iconBg="#FEF3C7" label="Your Progress" />
 
-        <View style={[styles.progressRow, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
-          <View style={[styles.progressCol, { flex: 1.2 }]}>
-            <View style={styles.progressTopRow}>
-              <Text style={styles.progressLabel}>Sessions Completed</Text>
-              <Text style={styles.progressMeta}>
-                {sessionsCompleted}/{sessionsTotal}
-              </Text>
+        <View style={[s.progressGrid, isWide && { flexDirection: "row" }]}>
+
+          {/* Sessions */}
+          <View style={[s.progressItem, isWide && { flex: 1 }]}>
+            <View style={s.progressLabelRow}>
+              <Text style={s.progressLabel}>Sessions Completed</Text>
+              <Text style={s.progressMeta}>{sessionsCompleted}/{sessionsTotal}</Text>
             </View>
-            <View style={styles.track}>
-              <View style={[styles.fillDark, { width: `${completedPct}%` }]} />
-            </View>
-            <Text style={styles.progressHint}>{Math.max(0, sessionsTotal - sessionsCompleted)} sessions remaining</Text>
+            <ProgressBar pct={completedPct} color="#6D28D9" />
+            <Text style={s.progressHint}>
+              {Math.max(0, sessionsTotal - sessionsCompleted)} sessions remaining
+            </Text>
           </View>
 
-          <View style={[styles.progressCol, { flex: 1.2 }]}>
-            <View style={styles.progressTopRow}>
-              <Text style={styles.progressLabel}>Current Driving Score</Text>
-              <View style={styles.scoreRight}>
-                <Text style={styles.scoreBig}>{currentDrivingScore}%</Text>
-                <View style={styles.scoreChip}>
-                  <Text style={styles.scoreChipText}>{scoreLabel}</Text>
+          {/* Score */}
+          <View style={[s.progressItem, isWide && { flex: 1 }]}>
+            <View style={s.progressLabelRow}>
+              <Text style={s.progressLabel}>Current Driving Score</Text>
+              <View style={s.scoreBadgeRow}>
+                <Text style={s.scoreBig}>{currentDrivingScore}%</Text>
+                <View style={[s.scoreBadge, { backgroundColor: scoreBadgeColor }]}>
+                  <Text style={s.scoreBadgeText}>{scoreLabel}</Text>
                 </View>
               </View>
             </View>
-            <View style={styles.track}>
-              <View style={[styles.fillDark, { width: `${Math.max(0, Math.min(100, currentDrivingScore))}%` }]} />
-            </View>
+            <ProgressBar pct={Math.min(100, Math.max(0, currentDrivingScore))} color={scoreBadgeColor} />
           </View>
 
-          <View style={[styles.goalBox, { flex: 1.1 }]}>
-            <View style={styles.goalIconWrap}>
-              <Text style={styles.goalIcon}>🧿</Text>
+          {/* Goal */}
+          <View style={[s.goalBox, isWide && { flex: 1 }]}>
+            <View style={s.goalIconWrap}>
+              <Text style={{ fontSize: 18 }}>🎯</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.goalTitle}>Next Goal</Text>
-              <Text style={styles.goalText}>{goalText}</Text>
+              <Text style={s.goalTitle}>Next Goal</Text>
+              <Text style={s.goalText}>{goalText}</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.upcomingCard}>
-          <View style={styles.upcomingHeader}>
-            <Text style={styles.upcomingTitle}>🗓️  Upcoming Session</Text>
+        {/* ── Upcoming session (inside progress card, matching Figma) */}
+        <View style={s.divider} />
+        <SectionHeader icon="🗓️" iconBg="#DCFCE7" label="Upcoming Session" />
 
-            <View style={styles.countdownWrap}>
-              <Text style={styles.countdownIcon}>🕒</Text>
-              <Text style={styles.countdownText}>{countdownLabel}</Text>
-            </View>
-          </View>
+        <View style={[s.upcomingRow, isWide && { flexDirection: "row" }]}>
+          <InfoPill label="Date"       value={upcoming.dateLabel}  icon="🗓️" bg="#EEF2FF" border="#C7D2FE" />
+          <InfoPill label="Time"       value={upcoming.timeLabel}  icon="🕑" bg="#F3E8FF" border="#DDD6FE" />
+          <InfoPill label="Instructor" value={upcoming.instructor} icon="👤" bg="#DCFCE7" border="#BBF7D0" />
+          <InfoPill label="Vehicle"    value={upcoming.vehicle}    icon="🚘" bg="#FEF3C7" border="#FDE68A" />
+        </View>
 
-          <View style={[styles.upcomingRow, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
-            <InfoPill label="Date" value={upcoming.dateLabel} icon="🗓️" bg="#EEF2FF" border="#E0E7FF" />
-            <InfoPill label="Time" value={upcoming.timeLabel} icon="🕑" bg="#F3E8FF" border="#E9D5FF" />
-            <InfoPill label="Instructor" value={upcoming.instructor} icon="👤" bg="#DCFCE7" border="#BBF7D0" />
-            <InfoPill label="Vehicle" value={upcoming.vehicle} icon="🚘" bg="#FEF3C7" border="#FDE68A" />
-
-            <Pressable onPress={onReschedule} style={({ pressed }) => [styles.rescheduleBtn, pressed ? { opacity: 0.9 } : null]}>
-              <Text style={styles.rescheduleText}>Reschedule</Text>
-            </Pressable>
-          </View>
+        <View style={s.countdownRow}>
+          <Text style={s.countdownText}>🕒 {countdownLabel}</Text>
+          <Pressable
+            onPress={onReschedule}
+            style={({ pressed }) => [s.outlineBtn, { marginTop: 0 }, pressed && { opacity: 0.8 }]}
+          >
+            <Text style={s.outlineBtnText}>Reschedule</Text>
+          </Pressable>
         </View>
       </View>
 
-      <View style={[styles.grid, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
-        <View style={[styles.card, isWide ? { flex: 1 } : null]}>
-          <Text style={styles.cardTitle}>📄  Recent Reports</Text>
+      {/* ── 3. Reports + AI Feedback ─────────────────────────────────────── */}
+      <View style={[s.twoCol, isWide && { flexDirection: "row" }]}>
 
-          <View style={{ marginTop: 10, gap: 10 }}>
+        {/* Recent Reports */}
+        <View style={[s.card, isWide && { flex: 1 }]}>
+          <SectionHeader icon="📄" iconBg="#DBEAFE" label="Recent Reports" />
+
+          <View style={{ marginTop: 12, gap: 10 }}>
             {reports.map((r) => (
-              <View key={r.id} style={styles.reportCard}>
-                <View style={styles.reportTop}>
+              <View key={r.id} style={s.reportCard}>
+                <View style={s.reportTop}>
                   <View>
-                    <Text style={styles.reportDate}>{r.date}</Text>
-                    <Text style={styles.reportSub}>Instructor: {r.instructor}</Text>
+                    <Text style={s.reportDate}>{r.date}</Text>
+                    <Text style={s.reportSub}>Instructor: {r.instructor}</Text>
                   </View>
-
-                  <View style={[styles.statusPill, r.status === "Passed" ? styles.statusPassed : styles.statusNeeds]}>
-                    <Text
-                      style={[
-                        styles.statusPillText,
-                        r.status === "Passed" ? styles.statusPassedText : styles.statusNeedsText,
-                      ]}
-                    >
-                      {r.status}
+                  <View style={[
+                    s.statusPill,
+                    r.status === "Passed" ? s.statusPassed : s.statusNeeds,
+                  ]}>
+                    <Text style={[
+                      s.statusText,
+                      r.status === "Passed" ? s.statusPassedText : s.statusNeedsText,
+                    ]}>
+                      {r.status === "Passed" ? "✓ Passed" : "Needs Work"}
                     </Text>
                   </View>
                 </View>
 
-                <View style={styles.reportBottom}>
-                  <Text style={styles.reportScoreLabel}>
-                    Driving Score: <Text style={styles.reportScoreValue}>{r.score}%</Text>
+                <View style={s.reportBottom}>
+                  <Text style={s.reportScoreLabel}>
+                    Score: <Text style={[s.reportScoreValue, { color: r.score >= 70 ? "#16A34A" : "#DC2626" }]}>{r.score}%</Text>
                   </Text>
-
-                  <Pressable onPress={() => onViewReport(r.id)} style={({ pressed }) => [styles.viewReportBtn, pressed ? { opacity: 0.9 } : null]}>
-                    <Text style={styles.viewReportText}>📄  View Full Report</Text>
+                  <Pressable
+                    onPress={() => onViewReport(r.id)}
+                    style={({ pressed }) => [s.outlineBtn, { marginTop: 0, paddingHorizontal: 12, paddingVertical: 8 }, pressed && { opacity: 0.8 }]}
+                  >
+                    <Text style={s.outlineBtnText}>View Report →</Text>
                   </Pressable>
                 </View>
               </View>
@@ -446,65 +324,73 @@ export default function Dashboard() {
           </View>
         </View>
 
-        <View style={[styles.card, isWide ? { flex: 1 } : null]}>
-          <Text style={styles.cardTitle}>💡  AI Feedback & Improvement Areas</Text>
+        {/* AI Feedback */}
+        <View style={[s.card, isWide && { flex: 1 }]}>
+          <SectionHeader icon="💡" iconBg="#FEF9C3" label="AI Feedback" />
 
-          <View style={{ marginTop: 12, gap: 14 }}>
+          <View style={{ marginTop: 12, gap: 16 }}>
             {feedback.map((f) => (
               <View key={f.id}>
-                <View style={styles.fbHeader}>
-                  <View style={styles.fbLeft}>
-                    <Text style={styles.fbIcon}>{f.icon}</Text>
-                    <Text style={styles.fbTitle}>{f.title}</Text>
+                <View style={s.fbRow}>
+                  <View style={s.fbLeft}>
+                    <Text style={{ fontSize: 14 }}>{f.icon}</Text>
+                    <Text style={s.fbTitle}>{f.title}</Text>
                   </View>
-                  <Text style={styles.fbPct}>{f.score}%</Text>
+                  <Text style={s.fbPct}>{f.score}%</Text>
                 </View>
-
-                <View style={styles.track}>
-                  <View style={[styles.fillDark, { width: `${Math.max(0, Math.min(100, f.score))}%` }]} />
-                </View>
-
-                <Text style={styles.fbHint}>"{f.hint}"</Text>
+                <ProgressBar pct={Math.min(100, Math.max(0, f.score))} color="#6D28D9" />
+                <Text style={s.fbHint}>"{f.hint}"</Text>
               </View>
             ))}
+          </View>
 
-            <View style={styles.tipBox}>
-              <Text style={styles.tipText}>💡 Tip: Focus on your lowest-scoring areas to see the biggest improvements!</Text>
-            </View>
+          <View style={s.tipBox}>
+            <Text style={s.tipText}>
+              💡 Focus on your lowest-scoring areas to see the biggest improvements!
+            </Text>
           </View>
         </View>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>💬  Instructor Comments</Text>
+      {/* ── 4. Instructor Comments ────────────────────────────────────────── */}
+      <View style={s.card}>
+        <SectionHeader icon="💬" iconBg="#F3E8FF" label="Instructor Comments" />
 
-        <View style={[styles.commentsRow, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
+        <View style={[s.commentsGrid, isWide && { flexDirection: "row" }]}>
           {comments.map((c) => (
-            <View key={c.id} style={styles.commentCard}>
-              <Text style={styles.commentDate}>{c.date}</Text>
-              <Text style={styles.commentText}>{c.text}</Text>
-
-              <View style={styles.commentRating}>
-                <Text style={styles.star}>⭐</Text>
-                <Text style={styles.ratingText}>{c.rating}</Text>
+            <View key={c.id} style={[s.commentCard, isWide && { flex: 1 }]}>
+              <View style={s.commentTop}>
+                <Text style={s.commentDate}>{c.date}</Text>
+                <View style={s.ratingRow}>
+                  <Text style={{ fontSize: 13 }}>⭐</Text>
+                  <Text style={s.ratingText}>{c.rating}</Text>
+                </View>
               </View>
+              <Text style={s.commentText}>{c.text}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🏅  Achievements & Milestones</Text>
+      {/* ── 5. Achievements ──────────────────────────────────────────────── */}
+      <View style={s.card}>
+        <SectionHeader icon="🏅" iconBg="#FEF3C7" label="Achievements & Milestones" />
 
-        <View style={[styles.achRow, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
+        <View style={[s.achGrid, isWide && { flexDirection: "row" }]}>
           {achievements.map((a) => (
-            <View key={a.id} style={[styles.achCard, a.earned ? styles.achEarned : styles.achLocked]}>
-              <Text style={styles.achIcon}>{a.icon}</Text>
-              <Text style={styles.achTitle}>{a.title}</Text>
-              <Text style={styles.achSub}>{a.subtitle}</Text>
-
-              <View style={[styles.earnedPill, a.earned ? styles.earnedOn : styles.earnedOff]}>
-                <Text style={[styles.earnedText, a.earned ? styles.earnedTextOn : styles.earnedTextOff]}>
+            <View
+              key={a.id}
+              style={[
+                s.achCard,
+                isWide && { flex: 1 },
+                a.earned ? s.achEarned : s.achLocked,
+              ]}
+            >
+              <Text style={s.achIcon}>{a.icon}</Text>
+              <Text style={s.achTitle}>{a.title}</Text>
+              <Text style={s.achSub}>{a.subtitle}</Text>
+              <View style={[s.earnedPill, a.earned ? s.earnedOn : s.earnedOff]}>
+                <Text style={[s.earnedText, a.earned ? s.earnedTextOn : s.earnedTextOff]}>
                   {a.earned ? "✓ Earned" : "Locked"}
                 </Text>
               </View>
@@ -512,310 +398,247 @@ export default function Dashboard() {
           ))}
         </View>
 
-        <View style={styles.bigGreen}>
-          <Text style={styles.bigGreenEmoji}>🎉</Text>
-          <Text style={styles.bigGreenText}>You&apos;re on track to pass — keep practicing!</Text>
-          <Text style={styles.bigGreenText}>You&apos;ve improved your overall score by 12% this month. Excellent progress!</Text>
+        {/* Motivation banner */}
+        <View style={s.motivationBanner}>
+          <Text style={s.motivationEmoji}>🎉</Text>
+          <Text style={s.motivationText}>You're on track to pass — keep practicing!</Text>
+          <Text style={s.motivationSub}>You've improved your overall score by 12% this month.</Text>
         </View>
 
-        <Pressable onPress={loadDashboard} style={({ pressed }) => [styles.refreshBtn, pressed ? { opacity: 0.9 } : null]}>
-          <Text style={styles.refreshBtnText}>↻ Refresh</Text>
+        <Pressable
+          onPress={loadDashboard}
+          style={({ pressed }) => [s.outlineBtn, pressed && { opacity: 0.8 }]}
+        >
+          <Text style={s.outlineBtnText}>↻ Refresh</Text>
         </Pressable>
       </View>
 
-      <Text style={styles.footer}>© 2025 DriveIQ. Student portal.</Text>
+      <Text style={s.footer}>© 2025 DriveIQ · Student Portal</Text>
     </ScrollView>
   );
 }
 
-function InfoPill({
-  label,
-  value,
-  icon,
-  bg,
-  border,
-}: {
-  label: string;
-  value: string;
-  icon: string;
-  bg: string;
-  border: string;
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function SectionHeader({ icon, iconBg, label }: { icon: string; iconBg: string; label: string }) {
+  return (
+    <View style={sh.row}>
+      <View style={[sh.iconWrap, { backgroundColor: iconBg }]}>
+        <Text style={sh.iconText}>{icon}</Text>
+      </View>
+      <Text style={sh.label}>{label}</Text>
+    </View>
+  );
+}
+
+const sh = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
+  iconWrap: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  iconText: { fontSize: 16 },
+  label: { fontSize: 14, fontWeight: "900", color: "#101828" },
+});
+
+function ProgressBar({ pct, color }: { pct: number; color: string }) {
+  return (
+    <View style={pb.track}>
+      <View style={[pb.fill, { width: `${pct}%` as any, backgroundColor: color }]} />
+    </View>
+  );
+}
+
+const pb = StyleSheet.create({
+  track: { height: 8, borderRadius: 999, backgroundColor: "#E5E7EB", overflow: "hidden", marginVertical: 6 },
+  fill: { height: "100%", borderRadius: 999 },
+});
+
+function InfoPill({ label, value, icon, bg, border }: {
+  label: string; value: string; icon: string; bg: string; border: string;
 }) {
   return (
-    <View style={styles.infoPill}>
-      <View style={[styles.infoIcon, { backgroundColor: bg, borderColor: border }]}>
+    <View style={ip.wrap}>
+      <View style={[ip.iconWrap, { backgroundColor: bg, borderColor: border }]}>
         <Text style={{ fontSize: 14 }}>{icon}</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value}</Text>
+        <Text style={ip.label}>{label}</Text>
+        <Text style={ip.value}>{value}</Text>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#F5F7FB" },
-  content: { padding: 16, paddingBottom: 28 },
+const ip = StyleSheet.create({
+  wrap: { flexDirection: "row", alignItems: "center", gap: 10, minWidth: 160 },
+  iconWrap: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  label: { fontSize: 11, fontWeight: "800", color: "#667085" },
+  value: { fontSize: 12, fontWeight: "900", color: "#101828", marginTop: 2 },
+});
 
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 16 },
-  centerText: { marginTop: 10, fontWeight: "800", color: "#64748B" },
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
+const s = StyleSheet.create({
+  page: { flex: 1, backgroundColor: "#F8FAFC" },
+  content: { padding: 16, paddingBottom: 32, gap: 14 },
+
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+  centerText: { marginTop: 12, fontSize: 13, fontWeight: "800", color: "#64748B" },
+
+  // Hero
   hero: {
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#E6E8F0",
+    borderRadius: 18,
+    padding: 20,
     backgroundColor: "#6D28D9",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    // Subtle gradient-like effect using a slightly lighter bottom border
+    borderBottomColor: "#5B21B6",
+    borderBottomWidth: 2,
   },
-  heroHello: { color: "#FFFFFF", fontWeight: "900", fontSize: 14 },
-  heroSub: { color: "rgba(255,255,255,0.85)", fontWeight: "800", fontSize: 12, marginTop: 8, maxWidth: 520 },
+  heroHello: { color: "#FFFFFF", fontWeight: "900", fontSize: 15 },
+  heroSub: { color: "rgba(255,255,255,0.82)", fontWeight: "700", fontSize: 12, marginTop: 6, maxWidth: 280 },
   heroIconBubble: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(255,255,255,0.22)",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 58, height: 58, borderRadius: 29,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center", justifyContent: "center",
   },
-  heroIcon: { fontSize: 22 },
+  heroIconText: { fontSize: 26 },
 
+  // Card
   card: {
     backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#EAECF0",
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 14,
+    padding: 16,
   },
-  cardHeaderRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  cardTitle: { color: "#101828", fontWeight: "900", fontSize: 13 },
+  cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 },
+  cardTitle: { fontSize: 14, fontWeight: "900", color: "#101828" },
 
-  progressRow: { marginTop: 12, gap: 12 },
-  progressCol: { gap: 10 },
-  progressTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  progressLabel: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  progressMeta: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  progressHint: { color: "#667085", fontWeight: "800", fontSize: 11 },
+  // Progress section
+  progressGrid: { flexDirection: "column", gap: 16, marginTop: 12 },
+  progressItem: { gap: 2 },
+  progressLabelRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  progressLabel: { fontSize: 12, fontWeight: "800", color: "#344054" },
+  progressMeta: { fontSize: 12, fontWeight: "900", color: "#101828" },
+  progressHint: { fontSize: 11, fontWeight: "700", color: "#667085" },
 
-  scoreRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  scoreBig: { color: "#101828", fontWeight: "900", fontSize: 14 },
-  scoreChip: {
-    backgroundColor: "#0B1220",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  scoreChipText: { color: "#FFFFFF", fontWeight: "900", fontSize: 11 },
+  scoreBadgeRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  scoreBig: { fontSize: 15, fontWeight: "900", color: "#101828" },
+  scoreBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  scoreBadgeText: { color: "#FFFFFF", fontWeight: "900", fontSize: 11 },
 
   goalBox: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#BBD3FF",
-    backgroundColor: "#EEF6FF",
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    justifyContent: "space-between",
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 12, borderWidth: 1, borderColor: "#BBD3FF",
+    backgroundColor: "#EEF6FF", padding: 12, marginTop: 4,
   },
   goalIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#BBD3FF",
-    backgroundColor: "#DDEBFF",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 40, height: 40, borderRadius: 12,
+    borderWidth: 1, borderColor: "#BFDBFE",
+    backgroundColor: "#DBEAFE", alignItems: "center", justifyContent: "center",
   },
-  goalIcon: { fontSize: 16 },
-  goalTitle: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  goalText: { color: "#101828", fontWeight: "800", fontSize: 11, marginTop: 4 },
+  goalTitle: { fontSize: 12, fontWeight: "900", color: "#1D4ED8" },
+  goalText: { fontSize: 11, fontWeight: "700", color: "#1E40AF", marginTop: 3 },
 
-  track: {
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: "#D1D5DB",
-    overflow: "hidden",
+  divider: { height: 1, backgroundColor: "#F2F4F7", marginVertical: 16 },
+
+  upcomingRow: { flexDirection: "column", gap: 12, marginTop: 12 },
+  countdownRow: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between", marginTop: 14,
   },
-  fillDark: { height: "100%", borderRadius: 999, backgroundColor: "#0B1220" },
+  countdownText: { fontSize: 12, fontWeight: "900", color: "#2563EB" },
 
-  upcomingCard: {
-    marginTop: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#EAECF0",
-    backgroundColor: "#FFFFFF",
-    padding: 12,
-  },
-  upcomingHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
-  upcomingTitle: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  countdownWrap: { flexDirection: "row", alignItems: "center", gap: 8 },
-  countdownIcon: { fontSize: 14 },
-  countdownText: { color: "#2563EB", fontWeight: "900", fontSize: 12 },
+  twoCol: { flexDirection: "column", gap: 14 },
 
-  upcomingRow: { marginTop: 12, gap: 12, alignItems: "center" },
-
-  infoPill: { flexDirection: "row", alignItems: "center", gap: 10, minWidth: 170 },
-  infoIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  infoLabel: { color: "#667085", fontWeight: "900", fontSize: 11 },
-  infoValue: { color: "#101828", fontWeight: "900", fontSize: 12, marginTop: 2 },
-
-  rescheduleBtn: {
-    marginLeft: "auto",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  rescheduleText: { color: "#101828", fontWeight: "900", fontSize: 12 },
-
-  grid: { gap: 14 },
-
+  // Reports
   reportCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#EAECF0",
-    backgroundColor: "#FFFFFF",
-    padding: 12,
+    borderRadius: 12, borderWidth: 1, borderColor: "#EAECF0",
+    backgroundColor: "#F9FAFB", padding: 12,
   },
-  reportTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
-  reportDate: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  reportSub: { color: "#667085", fontWeight: "800", fontSize: 11, marginTop: 6 },
-
-  statusPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, alignSelf: "flex-start" },
-  statusPassed: { backgroundColor: "#0B1220" },
-  statusNeeds: { backgroundColor: "#E5E7EB" },
-  statusPillText: { fontWeight: "900", fontSize: 11 },
-  statusPassedText: { color: "#FFFFFF" },
-  statusNeedsText: { color: "#101828" },
-
-  reportBottom: { marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" },
-  reportScoreLabel: { color: "#101828", fontWeight: "800", fontSize: 12 },
-  reportScoreValue: { fontWeight: "900" },
-
-  viewReportBtn: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#EAECF0",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: "#FFFFFF",
+  reportTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  reportDate: { fontSize: 12, fontWeight: "900", color: "#101828" },
+  reportSub: { fontSize: 11, fontWeight: "700", color: "#667085", marginTop: 4 },
+  reportBottom: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between", marginTop: 10,
   },
-  viewReportText: { color: "#101828", fontWeight: "900", fontSize: 12 },
+  reportScoreLabel: { fontSize: 12, fontWeight: "800", color: "#344054" },
+  reportScoreValue: { fontWeight: "900", fontSize: 13 },
 
-  fbHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  fbLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  fbIcon: { fontSize: 14 },
-  fbTitle: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  fbPct: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  fbHint: { marginTop: 8, color: "#667085", fontWeight: "800", fontSize: 11, fontStyle: "italic" },
+  statusPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  statusPassed: { backgroundColor: "#DCFCE7" },
+  statusNeeds: { backgroundColor: "#FEE2E2" },
+  statusText: { fontSize: 11, fontWeight: "900" },
+  statusPassedText: { color: "#16A34A" },
+  statusNeedsText: { color: "#DC2626" },
 
+  // AI Feedback
+  fbRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  fbLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  fbTitle: { fontSize: 12, fontWeight: "900", color: "#101828" },
+  fbPct: { fontSize: 12, fontWeight: "900", color: "#6D28D9" },
+  fbHint: { fontSize: 11, fontWeight: "700", color: "#667085", fontStyle: "italic" },
   tipBox: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-    backgroundColor: "#EFF6FF",
-    padding: 12,
-    marginTop: 6,
+    borderRadius: 12, borderWidth: 1, borderColor: "#BFDBFE",
+    backgroundColor: "#EFF6FF", padding: 12, marginTop: 8,
   },
-  tipText: { color: "#1D4ED8", fontWeight: "900", fontSize: 12 },
+  tipText: { fontSize: 12, fontWeight: "800", color: "#1D4ED8" },
 
-  commentsRow: { marginTop: 12, gap: 12 },
+  // Comments
+  commentsGrid: { flexDirection: "column", gap: 12, marginTop: 12 },
   commentCard: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#EAECF0",
-    backgroundColor: "#FFFFFF",
-    padding: 12,
-    minWidth: 260,
+    borderRadius: 12, borderWidth: 1, borderColor: "#EAECF0",
+    backgroundColor: "#F9FAFB", padding: 12,
   },
-  commentDate: { color: "#2563EB", fontWeight: "900", fontSize: 12 },
-  commentText: { marginTop: 10, color: "#101828", fontWeight: "800", fontSize: 12, lineHeight: 18 },
-  commentRating: { marginTop: 12, flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-end" },
-  star: { fontSize: 14 },
-  ratingText: { color: "#101828", fontWeight: "900", fontSize: 12 },
+  commentTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  commentDate: { fontSize: 12, fontWeight: "900", color: "#6D28D9" },
+  ratingRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  ratingText: { fontSize: 12, fontWeight: "900", color: "#101828" },
+  commentText: { fontSize: 12, fontWeight: "700", color: "#344054", marginTop: 10, lineHeight: 18 },
 
-  achRow: { marginTop: 12, gap: 12 },
+  // Achievements
+  achGrid: { flexDirection: "column", gap: 10, marginTop: 12 },
   achCard: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
+    borderRadius: 14, borderWidth: 1, padding: 14,
     alignItems: "center",
-    minWidth: 200,
   },
-  achEarned: { backgroundColor: "#FFFBEB", borderColor: "#F59E0B" },
-  achLocked: { backgroundColor: "#F9FAFB", borderColor: "#EAECF0" },
-  achIcon: { fontSize: 22, marginTop: 6 },
-  achTitle: { marginTop: 10, color: "#101828", fontWeight: "900", fontSize: 12 },
-  achSub: { marginTop: 8, color: "#667085", fontWeight: "800", fontSize: 11, textAlign: "center" },
-  earnedPill: { marginTop: 12, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  earnedOn: { backgroundColor: "#0B1220" },
+  achEarned: { backgroundColor: "#FFFBEB", borderColor: "#FCD34D" },
+  achLocked: { backgroundColor: "#F9FAFB", borderColor: "#E5E7EB" },
+  achIcon: { fontSize: 28 },
+  achTitle: { fontSize: 12, fontWeight: "900", color: "#101828", marginTop: 10 },
+  achSub: { fontSize: 11, fontWeight: "700", color: "#667085", textAlign: "center", marginTop: 6 },
+  earnedPill: { marginTop: 10, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  earnedOn: { backgroundColor: "#6D28D9" },
   earnedOff: { backgroundColor: "#E5E7EB" },
-  earnedText: { fontWeight: "900", fontSize: 11 },
+  earnedText: { fontSize: 11, fontWeight: "900" },
   earnedTextOn: { color: "#FFFFFF" },
-  earnedTextOff: { color: "#101828" },
+  earnedTextOff: { color: "#667085" },
 
-  bigGreen: {
-    marginTop: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#86EFAC",
-    backgroundColor: "#ECFDF3",
-    padding: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+  motivationBanner: {
+    marginTop: 16, borderRadius: 14, borderWidth: 1,
+    borderColor: "#BBF7D0", backgroundColor: "#F0FDF4",
+    padding: 16, alignItems: "center", gap: 6,
   },
-  bigGreenEmoji: { fontSize: 20 },
-  bigGreenText: { color: "#166534", fontWeight: "900", fontSize: 12, textAlign: "center" },
+  motivationEmoji: { fontSize: 24 },
+  motivationText: { fontSize: 13, fontWeight: "900", color: "#166534", textAlign: "center" },
+  motivationSub: { fontSize: 12, fontWeight: "700", color: "#15803D", textAlign: "center" },
 
-  footer: { marginTop: 2, textAlign: "center", color: "#98A2B3", fontSize: 11, fontWeight: "800" },
+  // Buttons
+  outlineBtn: {
+    marginTop: 10, borderRadius: 12, borderWidth: 1,
+    borderColor: "#D0D5DD", backgroundColor: "#FFFFFF",
+    paddingVertical: 10, paddingHorizontal: 16,
+    alignItems: "center", justifyContent: "center",
+  },
+  outlineBtnText: { color: "#344054", fontWeight: "900", fontSize: 12 },
 
-  joinLabel: { marginTop: 12, color: "#101828", fontWeight: "900", fontSize: 12, marginBottom: 8 },
-  joinInput: {
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontWeight: "800",
-  },
-  joinBtn: {
-    marginTop: 12,
-    backgroundColor: "#0B1220",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  joinBtnText: { color: "#FFFFFF", fontWeight: "900" },
+  sectionIconWrap: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  sectionIconEmoji: { fontSize: 16 },
 
-  refreshBtn: {
-    marginTop: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
-    paddingVertical: 10,
-    alignItems: "center",
-    justifyContent: "center",
+  footer: {
+    marginTop: 8, textAlign: "center",
+    color: "#98A2B3", fontSize: 11, fontWeight: "700",
   },
-  refreshBtnText: { color: "#101828", fontWeight: "900", fontSize: 12 },
 });

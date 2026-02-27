@@ -14,6 +14,8 @@ import { router } from "expo-router";
 import { apiPost, apiGet } from "../lib/api";
 import { setToken } from "../lib/token";
 import { API_BASE_URL } from "../lib/config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 type Role = "trainee" | "instructor";
 
@@ -55,6 +57,9 @@ export default function LoginScreen() {
       });
 
       await setToken(res.access_token);
+      if (res.user?.name) {
+      await AsyncStorage.setItem("driveiq_user_name", res.user.name);
+      }
 
       const backendRole: Role = res.user?.role;
 

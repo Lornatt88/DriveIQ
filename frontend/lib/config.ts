@@ -4,7 +4,7 @@ import { Platform } from "react-native";
 const USE_NGROK = true;
 
 // Your ngrok HTTPS URL (copy from ngrok terminal)
-const NGROK_BASE = "https://siest-nelle-untransplanted.ngrok-free.dev";
+const NGROK_BASE = "https://steely-exultant-piper.ngrok-free.dev";
 
 // Home Wi-Fi LAN IP (only if USE_NGROK = false)
 const LAN_IP = "192.168.0.6";
