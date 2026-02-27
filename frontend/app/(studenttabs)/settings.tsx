@@ -15,8 +15,9 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { apiGet, apiPut, apiPost } from "../../lib/api";
+import { apiGet, apiPut, apiPost, apiPatch } from "../../lib/api";
 import { clearToken } from "../../lib/token";
+
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -95,7 +96,7 @@ export default function Settings() {
         const data = await apiGet("/auth/me");
         if (data?.name)   setFullName(data.name);
         if (data?.email)  setEmail(data.email);
-        if (data?.mobile) setMobile(data.mobile);
+        if (data?.mobile) setMobile(data.mobile || "");
       } catch {
         // Silently fall back to AsyncStorage values
       }
@@ -116,10 +117,12 @@ export default function Settings() {
 
     try {
       setSaving(true);
-      await apiPut("/auth/profile", {
-        name:   fullName.trim(),
-        email:  email.trim().toLowerCase(),
-        mobile: mobile.trim(),
+      await apiPatch("/settings/me", {
+        profile: {
+          name:   fullName.trim(),
+          email:  email.trim().toLowerCase(),
+          mobile: mobile.trim(),
+        },
       });
 
       // Update AsyncStorage to keep layout name in sync

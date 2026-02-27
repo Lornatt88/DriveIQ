@@ -19,14 +19,10 @@ from app.auth import hash_password, verify_password
 from app.config import DATASETS_ROOT, JWT_ALG, JWT_EXPIRE_MIN, JWT_SECRET
 from app.database import (
     ensure_indexes,
-    events_col,
-    files_col,
     institute_codes_col,
-    metrics_col,
     results_col,
     sessions_col,
     settings_col,
-    trips_col,
     users_col,
 )
 from app.ml.predictor import predict_from_dataframe
@@ -94,28 +90,6 @@ class TokenResponse(BaseModel):
     user: UserPublic
 
 
-class JoinRequest(BaseModel):
-    join_code: str
-
-
-class TripCreate(BaseModel):
-    trainee_id: str
-    road_type: str
-    notes: str = ""
-    expected_label: str = ""
-
-
-class TripUpdate(BaseModel):
-    road_type: Optional[str] = None
-    notes: Optional[str] = None
-    expected_label: Optional[str] = None
-    status: Optional[str] = None
-
-
-class IngestRequest(BaseModel):
-    dataset_folder: str  # folder name under DATASETS_ROOT
-
-
 class SessionCreate(BaseModel):
     trainee_id: str
     vehicle_id: str = "UNKNOWN"
@@ -133,11 +107,6 @@ class SettingsUpdate(BaseModel):
     profile: Optional[dict] = None
     notifications: Optional[dict] = None
     preferences: Optional[dict] = None
-
-
-class MLPredictRequest(BaseModel):
-    dataset_folder: str
-    road_type: str = "secondary"
 
 
 class SessionStartRequest(BaseModel):
@@ -297,33 +266,6 @@ def me(current_user=Depends(get_current_user)):
 
 
 # ---------------------------
-# TRAINEE JOIN
-# ---------------------------
-
-@app.post("/trainee/join")
-def trainee_join(body: JoinRequest, current_user=Depends(require_role("trainee"))):
-    join_code = body.join_code.strip().upper()
-
-    instructor = users_col.find_one({"role": "instructor", "join_code": join_code})
-    if not instructor:
-        raise HTTPException(status_code=400, detail="Invalid join_code")
-
-    users_col.update_one(
-        {"user_id": current_user["user_id"]},
-        {"$set": {"trainee_of_instructor_id": instructor["instructor_id"]}},
-    )
-
-    return {
-        "status": "ok",
-        "linked_to": {
-            "instructor_id": instructor["instructor_id"],
-            "instructor_name": instructor.get("name", ""),
-            "join_code": join_code,
-        },
-    }
-
-
-# ---------------------------
 # DASHBOARDS
 # ---------------------------
 
@@ -450,152 +392,8 @@ def update_settings(body: SettingsUpdate, current_user=Depends(get_current_user)
 
 
 # ---------------------------
-# TRIPS (kept for now)
+# RECORDS (needed by UI)
 # ---------------------------
-
-@app.post("/trips")
-def create_trip(body: TripCreate, current_user=Depends(require_role("instructor"))):
-    trainee = users_col.find_one({"user_id": body.trainee_id, "role": "trainee"})
-    if not trainee:
-        raise HTTPException(status_code=404, detail="Trainee not found")
-    if trainee.get("trainee_of_instructor_id") != current_user["instructor_id"]:
-        raise HTTPException(status_code=403, detail="Trainee not linked to this instructor")
-
-    doc = {
-        "instructor_id": current_user["instructor_id"],
-        "trainee_id": body.trainee_id,
-        "road_type": body.road_type,
-        "notes": body.notes,
-        "expected_label": body.expected_label,
-        "created_at": now_utc(),
-        "status": "created",
-        "dataset_folder": None,
-    }
-    res = trips_col.insert_one(doc)
-    return {"trip_id": str(res.inserted_id)}
-
-
-@app.get("/trips")
-def list_trips(current_user=Depends(get_current_user)):
-    if current_user["role"] == "instructor":
-        cur = trips_col.find({"instructor_id": current_user["instructor_id"]}).sort("created_at", -1)
-    else:
-        cur = trips_col.find({"trainee_id": current_user["user_id"]}).sort("created_at", -1)
-    return to_jsonable(list(cur))
-
-
-@app.get("/trips/{trip_id}")
-def get_trip(trip_id: str, current_user=Depends(get_current_user)):
-    t = trips_col.find_one({"_id": oid(trip_id)})
-    if not t:
-        raise HTTPException(status_code=404, detail="Trip not found")
-
-    if current_user["role"] == "instructor":
-        if t.get("instructor_id") != current_user["instructor_id"]:
-            raise HTTPException(status_code=403, detail="Forbidden")
-    else:
-        if t.get("trainee_id") != current_user["user_id"]:
-            raise HTTPException(status_code=403, detail="Forbidden")
-
-    return to_jsonable(t)
-
-
-@app.patch("/trips/{trip_id}")
-def update_trip(trip_id: str, payload: TripUpdate, current_user=Depends(require_role("instructor"))):
-    t = trips_col.find_one({"_id": oid(trip_id)})
-    if not t:
-        raise HTTPException(status_code=404, detail="Trip not found")
-    if t.get("instructor_id") != current_user["instructor_id"]:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    update = {k: v for k, v in payload.model_dump().items() if v is not None}
-    if not update:
-        raise HTTPException(status_code=400, detail="No fields to update")
-
-    trips_col.update_one({"_id": oid(trip_id)}, {"$set": update})
-    return {"status": "updated"}
-
-
-# ---------------------------
-# INGEST (kept)
-# ---------------------------
-
-@app.post("/trips/{trip_id}/ingest")
-def ingest_trip(trip_id: str, req: IngestRequest, current_user=Depends(require_role("instructor"))):
-    trip = trips_col.find_one({"_id": oid(trip_id)})
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-    if trip.get("instructor_id") != current_user["instructor_id"]:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    files, summary, route_points, timeline = ingest_dataset(req.dataset_folder)
-
-    files_docs = [
-        {
-            "trip_id": trip_id,
-            "dataset_folder": req.dataset_folder,
-            "name": f["name"],
-            "path": f["path"],
-            "exists": f["exists"],
-            "created_at": now_utc(),
-        }
-        for f in files
-    ]
-    if files_docs:
-        files_col.insert_many(files_docs)
-
-    metrics_col.update_one(
-        {"trip_id": trip_id},
-        {
-            "$set": {
-                "trip_id": trip_id,
-                "dataset_folder": req.dataset_folder,
-                "summary": summary,
-                "route_preview": route_points,
-                "updated_at": now_utc(),
-            }
-        },
-        upsert=True,
-    )
-
-    event_docs = []
-    for ev in timeline:
-        doc = {
-            "trip_id": trip_id,
-            "dataset_folder": req.dataset_folder,
-            "t": ev.get("t"),
-            "kind": ev.get("kind"),
-            "meta": ev.get("meta", {}),
-            "created_at": now_utc(),
-            "instructor_id": trip.get("instructor_id"),
-            "trainee_id": trip.get("trainee_id"),
-            "severity": ev.get("severity") or ev.get("meta", {}).get("severity") or "low",
-        }
-        event_docs.append(doc)
-
-    if event_docs:
-        events_col.insert_many(event_docs)
-
-    trips_col.update_one(
-        {"_id": oid(trip_id)},
-        {"$set": {"status": "ingested", "dataset_folder": req.dataset_folder}},
-    )
-
-    return {
-        "trip_id": trip_id,
-        "dataset_folder": req.dataset_folder,
-        "files_registered": len(files_docs),
-        "route_points_saved": len(route_points),
-        "events_inserted": len(event_docs),
-        "summary": summary,
-    }
-
-
-# ---------------------------
-# Dataset picking (simulation)
-# ---------------------------
-
-def _resolve_datasets_root() -> Path:
     base = Path(DATASETS_ROOT) if DATASETS_ROOT else (Path.cwd() / "datasets")
     return base.resolve()
 
@@ -620,145 +418,6 @@ def _pick_csv_for_simulation(road_type: str) -> Path:
 
     pool = motor_like if (wants_motor and motor_like) else (non_motor_like if non_motor_like else csvs)
     return random.choice(pool)
-
-
-def _load_csv_any(dataset_ref: str | None, road_type: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-    """
-    dataset_ref can be:
-      - None -> auto pick random CSV
-      - folder name under datasets -> pick random csv inside
-      - "something.csv" -> resolve under datasets root (if exists)
-      - absolute path -> load directly
-    Returns: (df, used_info_dict)
-    """
-    root = _resolve_datasets_root()
-
-    if not dataset_ref:
-        chosen = _pick_csv_for_simulation(road_type)
-        used = {
-            "csv": chosen.name,
-            "rel_path": str(chosen.relative_to(root)) if chosen.is_relative_to(root) else str(chosen),
-        }
-        return pd.read_csv(chosen), used
-
-    ref = dataset_ref.strip()
-    p = Path(ref)
-
-    # absolute CSV
-    if p.is_absolute() and p.exists() and p.suffix.lower() == ".csv":
-        used = {"csv": p.name, "rel_path": str(p)}
-        return pd.read_csv(p), used
-
-    # CSV filename -> search under datasets
-    if ref.lower().endswith(".csv"):
-        candidates = [c for c in _list_all_csvs() if c.name.lower() == Path(ref).name.lower()]
-        if not candidates:
-            direct = (root / ref).resolve()
-            if direct.exists() and direct.suffix.lower() == ".csv":
-                used = {"csv": direct.name, "rel_path": str(direct.relative_to(root))}
-                return pd.read_csv(direct), used
-            raise HTTPException(status_code=400, detail=f"Dataset CSV not found under datasets: {ref}")
-
-        chosen = random.choice(candidates)
-        used = {"csv": chosen.name, "rel_path": str(chosen.relative_to(root))}
-        return pd.read_csv(chosen), used
-
-    # folder under datasets root
-    folder = (root / ref).resolve()
-    if not folder.exists() or not folder.is_dir():
-        raise HTTPException(status_code=400, detail=f"Dataset folder not found: {folder}")
-
-    csv_files = [x for x in folder.glob("*.csv") if x.is_file()]
-    if not csv_files:
-        # allow one-level deeper
-        csv_files = [x for x in folder.rglob("*.csv") if x.is_file()]
-    if not csv_files:
-        raise HTTPException(status_code=400, detail=f"No CSV files found in: {folder}")
-
-    chosen = random.choice(csv_files)
-    used = {
-        "csv": chosen.name,
-        "rel_path": str(chosen.relative_to(root)) if chosen.is_relative_to(root) else str(chosen),
-    }
-    return pd.read_csv(chosen), used
-
-
-# ---------------------------
-# ML endpoint (dev)
-# ---------------------------
-
-@app.post("/ml/predict")
-def ml_predict(req: MLPredictRequest, current_user=Depends(get_current_user)):
-    df, used = _load_csv_any(req.dataset_folder, req.road_type)
-    pred = predict_from_dataframe(df, req.road_type)
-    return {"status": "ok", "dataset_used": used, "prediction": pred}
-
-
-# ---------------------------
-# PREDICT (Trip) — ML ONLY
-# ---------------------------
-
-@app.post("/trips/{trip_id}/predict")
-def predict_trip(trip_id: str, current_user=Depends(get_current_user)):
-    trip = trips_col.find_one({"_id": oid(trip_id)})
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-
-    if current_user["role"] == "instructor":
-        if trip.get("instructor_id") != current_user["instructor_id"]:
-            raise HTTPException(status_code=403, detail="Forbidden")
-    else:
-        if trip.get("trainee_id") != current_user["user_id"]:
-            raise HTTPException(status_code=403, detail="Forbidden")
-
-    dataset_folder = trip.get("dataset_folder")
-    if not dataset_folder:
-        raise HTTPException(status_code=400, detail="Trip has no dataset_folder. Ingest first.")
-
-    road_type = trip.get("road_type", "secondary")
-    df, used = _load_csv_any(dataset_folder, road_type)
-    ml_out = predict_from_dataframe(df, road_type)
-
-    analysis_summary = {
-        "behavior": ml_out.get("label", "Unknown"),
-        "confidence": float(ml_out.get("confidence", 0.0)),
-        "overall": int(ml_out.get("overall", 0)),
-        "badge": ml_out.get("badge", "Improving"),
-        "probs": ml_out.get("probs", {}),
-    }
-
-    ai_feedback = [
-        {
-            "priority": "high" if analysis_summary["behavior"] != "Normal" else "medium",
-            "title": "Session analysis",
-            "message": f"{analysis_summary['behavior']} (confidence {round(analysis_summary['confidence'] * 100)}%)",
-            "icon": "🤖",
-        }
-    ]
-
-    result = {
-        "trip_id": trip_id,
-        "session_id": None,
-        "trainee_id": trip.get("trainee_id"),
-        "instructor_id": trip.get("instructor_id"),
-        "created_at": now_utc(),
-        "method": "ml_v1",
-        "dataset_used": used,
-        "analysis": analysis_summary,
-        "ai_feedback": ai_feedback,
-    }
-
-    ins = results_col.insert_one(result)
-    result["_id"] = ins.inserted_id
-    return to_jsonable(result)
-
-
-@app.get("/trips/{trip_id}/results/latest")
-def latest_result(trip_id: str, current_user=Depends(get_current_user)):
-    r = results_col.find_one({"trip_id": trip_id}, sort=[("created_at", -1)])
-    if not r:
-        raise HTTPException(status_code=404, detail="No results yet. Predict first.")
-    return to_jsonable(r)
 
 
 # ---------------------------
