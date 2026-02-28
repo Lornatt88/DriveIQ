@@ -1,3 +1,10 @@
+"""
+database.py — v2 Per-Session Booking Model
+============================================
+Removed: institute_codes, join_code indexes, trainee_of_instructor_id
+Added:   instructor_profiles, availability, bookings, reviews
+"""
+
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.errors import OperationFailure
 from app.config import MONGO_URI, MONGO_DB
@@ -5,64 +12,73 @@ from app.config import MONGO_URI, MONGO_DB
 client = MongoClient(MONGO_URI)
 db = client[MONGO_DB]
 
-# Collections (ALL used by main.py)
-users_col = db["users"]
-trips_col = db["trips"]
-sessions_col = db["sessions"]
-booking_requests_col = db["booking_requests"]
-settings_col = db["settings"]
+# ── Collections ─────────────────────────────────────────────────────────────
 
-files_col = db["files"]
-metrics_col = db["metrics"]
-events_col = db["events"]
-results_col = db["results"]
+users_col               = db["users"]
+institute_codes_col     = db["institute_codes"]
+instructor_profiles_col = db["instructor_profiles"]
+availability_col        = db["availability"]
+bookings_col            = db["bookings"]
+sessions_col            = db["sessions"]
+results_col             = db["results"]
+reviews_col             = db["reviews"]
+settings_col            = db["settings"]
 
-# Institute codes = codes given by institute (for instructor registration)
-institute_codes_col = db["institute_codes"]
 
 def _safe_create_index(col, keys, **kwargs):
-    """
-    Create index but NEVER crash app startup if:
-    - index exists with different name/options
-    - index already exists
-    """
     try:
         col.create_index(keys, **kwargs)
-    except OperationFailure:
-        # Do not crash server. Index exists or conflicts.
+    except (OperationFailure, Exception):
         pass
-    except Exception:
-        # Also do not crash on unexpected index errors.
-        pass
+
 
 def ensure_indexes():
-    # USERS
-    _safe_create_index(users_col, [("email", ASCENDING)], unique=True, name="email_1_unique")
-    _safe_create_index(users_col, [("user_id", ASCENDING)], unique=True, name="user_id_1_unique")
-    _safe_create_index(users_col, [("role", ASCENDING), ("created_at", DESCENDING)], name="role_1_created_-1")
-    _safe_create_index(users_col, [("join_code", ASCENDING)], unique=True, name="join_code_1_unique", sparse=True)
-    _safe_create_index(users_col, [("instructor_id", ASCENDING)], name="instructor_id_1")
+    # ── USERS ───────────────────────────────────────────────────────────
+    _safe_create_index(users_col, [("email", ASCENDING)], unique=True, name="email_unique")
+    _safe_create_index(users_col, [("user_id", ASCENDING)], unique=True, name="user_id_unique")
+    _safe_create_index(users_col, [("role", ASCENDING), ("created_at", DESCENDING)], name="role_created")
 
-    # INSTITUTE CODES
-    _safe_create_index(institute_codes_col, [("code", ASCENDING)], unique=True, name="code_1_unique")
-    _safe_create_index(institute_codes_col, [("used", ASCENDING)], name="used_1")
+    # ── INSTITUTE CODES ─────────────────────────────────────────────────
+    _safe_create_index(institute_codes_col, [("code", ASCENDING)], unique=True, name="ic_code_unique")
+    _safe_create_index(institute_codes_col, [("used", ASCENDING)], name="ic_used")
 
-    # TRIPS
-    _safe_create_index(trips_col, [("created", DESCENDING)], name="created_-1")
-    _safe_create_index(trips_col, [("instructor_id", ASCENDING), ("created", DESCENDING)], name="instructor_id_1_created_-1")
-    _safe_create_index(trips_col, [("trainee_id", ASCENDING), ("created", DESCENDING)], name="trainee_id_1_created_-1")
+    # ── INSTRUCTOR PROFILES ─────────────────────────────────────────────
+    _safe_create_index(instructor_profiles_col, [("instructor_id", ASCENDING)], unique=True, name="ip_instructor_id")
+    _safe_create_index(instructor_profiles_col, [("rating", DESCENDING)], name="ip_rating")
+    _safe_create_index(instructor_profiles_col, [("active", ASCENDING), ("rating", DESCENDING)], name="ip_active_rating")
+    _safe_create_index(instructor_profiles_col, [("specialties", ASCENDING)], name="ip_specialties")
+    _safe_create_index(instructor_profiles_col, [("location_area", ASCENDING)], name="ip_location")
 
-    # FILES / METRICS / EVENTS / RESULTS
-    _safe_create_index(files_col, [("trip_id", ASCENDING)], name="files_trip_id_1")
-    _safe_create_index(metrics_col, [("trip_id", ASCENDING)], name="metrics_trip_id_1")
-    _safe_create_index(events_col, [("trip_id", ASCENDING), ("t", ASCENDING)], name="trip_id_1_t_1")
-    _safe_create_index(results_col, [("trip_id", ASCENDING), ("created", DESCENDING)], name="trip_id_1_created_-1")
+    # ── AVAILABILITY ────────────────────────────────────────────────────
+    _safe_create_index(availability_col, [("instructor_id", ASCENDING), ("date", ASCENDING)], name="av_instructor_date")
+    _safe_create_index(availability_col, [("slot_id", ASCENDING)], unique=True, name="av_slot_id")
+    _safe_create_index(availability_col, [("status", ASCENDING), ("date", ASCENDING)], name="av_status_date")
+    _safe_create_index(availability_col, [("instructor_id", ASCENDING), ("status", ASCENDING), ("date", ASCENDING)], name="av_inst_status_date")
 
-    # SESSIONS (for frontend screens later)
-    _safe_create_index(sessions_col, [("instructor_id", ASCENDING), ("created", DESCENDING)], name="sessions_instructor_id_1_created_-1")
-    _safe_create_index(sessions_col, [("trainee_id", ASCENDING), ("created", DESCENDING)], name="sessions_trainee_id_1_created_-1")
+    # ── BOOKINGS ────────────────────────────────────────────────────────
+    _safe_create_index(bookings_col, [("booking_id", ASCENDING)], unique=True, name="bk_booking_id")
+    _safe_create_index(bookings_col, [("trainee_id", ASCENDING), ("created_at", DESCENDING)], name="bk_trainee_created")
+    _safe_create_index(bookings_col, [("instructor_id", ASCENDING), ("created_at", DESCENDING)], name="bk_instructor_created")
+    _safe_create_index(bookings_col, [("status", ASCENDING), ("created_at", DESCENDING)], name="bk_status_created")
+    _safe_create_index(bookings_col, [("slot_id", ASCENDING)], name="bk_slot_id")
 
-    # BOOKING REQUESTS
-    _safe_create_index(booking_requests_col, [("instructor_id", ASCENDING), ("created", DESCENDING)], name="booking_instructor_id_1_created_-1")
-    _safe_create_index(booking_requests_col, [("trainee_id", ASCENDING), ("created", DESCENDING)], name="booking_trainee_id_1_created_-1")
-    _safe_create_index(booking_requests_col, [("status", ASCENDING), ("created", DESCENDING)], name="booking_status_1_created_-1")
+    # ── SESSIONS ────────────────────────────────────────────────────────
+    _safe_create_index(sessions_col, [("session_id", ASCENDING)], unique=True, name="ss_session_id")
+    _safe_create_index(sessions_col, [("trainee_id", ASCENDING), ("created_at", DESCENDING)], name="ss_trainee_created")
+    _safe_create_index(sessions_col, [("instructor_id", ASCENDING), ("created_at", DESCENDING)], name="ss_instructor_created")
+    _safe_create_index(sessions_col, [("booking_id", ASCENDING)], name="ss_booking_id")
+    _safe_create_index(sessions_col, [("status", ASCENDING)], name="ss_status")
+
+    # ── RESULTS ─────────────────────────────────────────────────────────
+    _safe_create_index(results_col, [("session_id", ASCENDING)], name="rs_session_id")
+    _safe_create_index(results_col, [("trainee_id", ASCENDING), ("created_at", DESCENDING)], name="rs_trainee_created")
+    _safe_create_index(results_col, [("instructor_id", ASCENDING), ("created_at", DESCENDING)], name="rs_instructor_created")
+    _safe_create_index(results_col, [("booking_id", ASCENDING)], name="rs_booking_id")
+
+    # ── REVIEWS ─────────────────────────────────────────────────────────
+    _safe_create_index(reviews_col, [("instructor_id", ASCENDING), ("created_at", DESCENDING)], name="rv_instructor_created")
+    _safe_create_index(reviews_col, [("trainee_id", ASCENDING)], name="rv_trainee")
+    _safe_create_index(reviews_col, [("review_id", ASCENDING)], unique=True, name="rv_review_id")
+
+    # ── SETTINGS ────────────────────────────────────────────────────────
+    _safe_create_index(settings_col, [("user_id", ASCENDING)], unique=True, name="st_user_id")

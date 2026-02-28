@@ -100,8 +100,14 @@ export function apiPut(path: string, bodyOrOptions?: any) {
   return request(path, { method: "PUT", body: bodyOrOptions });
 }
 
-export function apiDelete(path: string, opts?: ApiOptions) {
-  return request(path, { method: "DELETE", ...(opts || {}) });
+export async function apiDelete(path: string) {
+  const token = await getToken();
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error((await res.json())?.detail || res.statusText);
+  return res.json();
 }
 
 // ✅ ADD THIS

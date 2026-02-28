@@ -1,408 +1,686 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, TextInput,
-  useWindowDimensions, ActivityIndicator, Alert,
+  View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal,
+  useWindowDimensions, ActivityIndicator, Alert, FlatList,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
-import { apiGet, apiPost } from "../../lib/api";
+import { router, useFocusEffect } from "expo-router";
+import { apiGet, apiPost, apiDelete } from "../../lib/api";
 import { colors, type_, radius, space, card, page, tint } from "../../lib/theme";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ReminderType = "upcoming" | "cancelled" | "report";
-type Reminder     = { id: string; type: ReminderType; title: string; time: string };
-type SessionDoc   = { session_id: string; trainee_id: string; instructor_id: string; vehicle_id: string; scheduled_at: string; duration_min: number; status: string; notes?: string; created_at?: string };
-type SessionStatus= "scheduled" | "pending" | "cancelled" | "completed";
-type SessionRowVm = { id: string; studentId: string; initials: string; studentName: string; instructorName: string; status: SessionStatus; vehicleId: string; dateLabel: string; timeLabel: string; scheduledAtMs: number };
-
-const STATUS_PILL: Record<SessionStatus, { bg: string; text: string; label: string; border: string }> = {
-  scheduled: { bg: colors.darkBtn,     text: "#FFFFFF",           label: "scheduled", border: colors.darkBtn     },
-  pending:   { bg: "#F2F4F7",           text: colors.label,        label: "pending",   border: colors.border      },
-  cancelled: { bg: colors.redDeep,     text: "#FFFFFF",           label: "cancelled", border: colors.redDeep     },
-  completed: { bg: colors.green,       text: "#FFFFFF",           label: "completed", border: colors.green       },
+type InstructorProfile = {
+  instructor_id: string; name: string; bio: string; specialties: string[];
+  experience_years: number; price_per_session: number; currency: string;
+  vehicle: string; languages: string[]; location_area: string;
+  rating: number; total_reviews: number; total_sessions: number;
 };
 
-const REMINDER_STYLE: Record<ReminderType, { icon: string; iconBg: string; iconBorder: string }> = {
-  upcoming: { icon: "🕒", iconBg: tint.blue.bg,   iconBorder: tint.blue.border  },
-  cancelled:{ icon: "⚠️", iconBg: tint.red.bg,    iconBorder: tint.red.border   },
-  report:   { icon: "✅", iconBg: tint.green.bg,  iconBorder: tint.green.border },
+type Slot = {
+  slot_id: string; instructor_id: string; date: string;
+  start_time: string; end_time: string; duration_min: number; status: string;
 };
 
-function safeParseDateMs(input: string): number { const ms = Date.parse(input); return Number.isFinite(ms) ? ms : 0; }
-function formatDateLabel(ms: number) { if (!ms) return "—"; return new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" }); }
-function formatTimeLabel(ms: number) { if (!ms) return "—"; return new Date(ms).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
-function initialsFromName(name?: string) {
-  if (!name) return "—";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return ((parts[0]?.[0] || "") + (parts.length > 1 ? parts[parts.length - 1]?.[0] || "" : "")).toUpperCase() || "—";
+type Booking = {
+  booking_id: string; instructor_id: string; instructor_name?: string;
+  slot_date: string; start_time: string; end_time: string; status: string;
+  session_id?: string;
+};
+
+type SessionDoc = {
+  session_id: string; instructor_id: string; instructor_name?: string;
+  status: string; road_type?: string; created_at?: string;
+  started_at?: string; ended_at?: string;
+};
+
+type ResultDoc = {
+  session_id: string; instructor_name?: string;
+  analysis?: { behavior: string; overall: number; badge: string; confidence: number };
+  ai_feedback?: any[]; instructor_comment?: { text: string; rating: number; date: string };
+  created_at?: string;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function initials(name?: string) {
+  if (!name) return "??";
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] || "") + (parts[parts.length - 1]?.[0] || "")).toUpperCase();
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+function fmtDate(iso?: string) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
+  catch { return "—"; }
+}
+
+function fmtTime(iso?: string) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
+  catch { return "—"; }
+}
+
+function starsString(rating: number) {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5;
+  return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(5 - full - (half ? 1 : 0));
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function SessionsScreen() {
   const { width } = useWindowDimensions();
-  const isWide    = width >= 900;
 
-  const [tab, setTab]               = useState<"upcoming" | "past">("upcoming");
-  const [query, setQuery]           = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All Status" | SessionStatus>("All Status");
-  const [viewMode, setViewMode]     = useState<"list" | "calendar">("list");
-  const [loading, setLoading]       = useState(true);
-  const [rawSessions, setRawSessions] = useState<SessionDoc[]>([]);
-  const [learners, setLearners]     = useState<any[]>([]);
-  const [creating, setCreating]     = useState(false);
-  const [selectedTraineeId, setSelectedTraineeId] = useState<string>("");
-  const [vehicleId, setVehicleId]   = useState("VEH-0001");
-  const [scheduledAt, setScheduledAt] = useState(new Date().toISOString());
-  const [durationMin, setDurationMin] = useState("60");
-  const [notes, setNotes]           = useState("");
+  // ── State ──────────────────────────────────────────────────────────
+  const [loading, setLoading]                 = useState(true);
+  const [instructors, setInstructors]         = useState<InstructorProfile[]>([]);
+  const [bookings, setBookings]               = useState<Booking[]>([]);
+  const [sessions, setSessions]               = useState<SessionDoc[]>([]);
+  const [results, setResults]                 = useState<ResultDoc[]>([]);
+  const [dashData, setDashData]               = useState<any>(null);
 
-  const reminders: Reminder[] = useMemo(() => [
-    { id: "r1", type: "upcoming", title: "Upcoming sessions show here after you create them", time: "—" },
-    { id: "r2", type: "report",   title: "Reports appear after sessions are completed", time: "—" },
-  ], []);
+  // Filters
+  const [langFilter, setLangFilter]           = useState("All");
+  const [specialtyFilter, setSpecialtyFilter] = useState("All");
 
-  const loadLearners = async () => {
-    try {
-      const data = await apiGet("/instructor/learners");
-      const arr  = Array.isArray(data) ? data : [];
-      setLearners(arr);
-      if (!selectedTraineeId && arr.length) setSelectedTraineeId(arr[0].user_id);
-    } catch { setLearners([]); }
-  };
+  // Booking modal
+  const [showBooking, setShowBooking]         = useState(false);
+  const [selectedInstructor, setSelectedInstructor] = useState<InstructorProfile | null>(null);
+  const [slots, setSlots]                     = useState<Slot[]>([]);
+  const [slotsLoading, setSlotsLoading]       = useState(false);
+  const [selectedSlot, setSelectedSlot]       = useState<Slot | null>(null);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
 
-  const loadSessions = async () => {
+  // ── Data Loading ───────────────────────────────────────────────────
+
+  const loadAll = async () => {
     try {
       setLoading(true);
-      const data = await apiGet("/sessions");
-      setRawSessions(Array.isArray(data) ? data : []);
+      const [instData, bookData, sessData, dashResp] = await Promise.all([
+        apiGet("/instructors"),
+        apiGet("/bookings/me"),
+        apiGet("/sessions"),
+        apiGet("/dashboard/trainee"),
+      ]);
+      setInstructors(Array.isArray(instData) ? instData : []);
+      setBookings(Array.isArray(bookData) ? bookData : []);
+      setSessions(Array.isArray(sessData) ? sessData : []);
+      setDashData(dashResp);
+
+      // Load results for past sessions
+      try {
+        const recData = await apiGet("/records/trainee");
+        setResults(Array.isArray(recData) ? recData : []);
+      } catch { setResults([]); }
     } catch (e: any) {
-      setRawSessions([]);
-      Alert.alert("Sessions Error", e?.message || "Failed to load sessions");
-    } finally { setLoading(false); }
+      Alert.alert("Error", e?.message || "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const createSession = async () => {
-    if (!selectedTraineeId) { Alert.alert("No learner selected", "A trainee must join your instructor code first."); return; }
-    try {
-      setCreating(true);
-      const res = await apiPost("/sessions", {
-        trainee_id: selectedTraineeId, vehicle_id: vehicleId || "UNKNOWN",
-        scheduled_at: scheduledAt, duration_min: Math.max(1, Number(durationMin) || 60), notes: notes || "",
-      });
-      Alert.alert("Session created ✅", `session_id: ${res?.session_id || "OK"}`);
-      await loadSessions();
-    } catch (e: any) { Alert.alert("Create failed", e?.message || "Failed to create session");
-    } finally { setCreating(false); }
-  };
+  useEffect(() => { loadAll(); }, []);
+  useFocusEffect(useCallback(() => { loadAll(); }, []));
 
-  useEffect(() => { loadLearners(); loadSessions(); }, []);
-  useFocusEffect(useCallback(() => { loadLearners(); loadSessions(); }, []));
+  // ── Derived Data ───────────────────────────────────────────────────
 
-  const traineeNameById = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const l of learners) { if (l?.user_id) m[l.user_id] = l?.name || ""; }
-    return m;
-  }, [learners]);
+  const sessionsCompleted = dashData?.progress?.sessions_completed ?? 0;
+  const targetSessions    = dashData?.progress?.target_sessions ?? 10;
+  const currentScore      = dashData?.progress?.current_score ?? 0;
+  const badge             = dashData?.welcome?.badge ?? "—";
+  const studentName       = dashData?.welcome?.name ?? "";
 
-  const sessionsVm: SessionRowVm[] = useMemo(() => rawSessions.map((s) => {
-    const ms     = safeParseDateMs(s.scheduled_at);
-    const status = (s.status || "scheduled") as SessionStatus;
-    const realName = traineeNameById[s.trainee_id] || "";
-    return {
-      id: s.session_id, studentId: s.trainee_id,
-      initials: realName ? initialsFromName(realName) : (s.trainee_id.slice(0, 2) || "NA").toUpperCase(),
-      studentName: realName || `Trainee ${s.trainee_id.slice(0, 6).toUpperCase()}`,
-      instructorName: "You", status, vehicleId: s.vehicle_id || "UNKNOWN",
-      dateLabel: formatDateLabel(ms), timeLabel: formatTimeLabel(ms), scheduledAtMs: ms,
-    };
-  }), [rawSessions, traineeNameById]);
+  const upcomingBookings = useMemo(
+    () => bookings.filter(b => b.status === "confirmed").sort((a, b) => (a.start_time || "").localeCompare(b.start_time || "")),
+    [bookings]
+  );
 
-  const nowMs = Date.now();
-  const list  = useMemo(() => {
-    const base   = sessionsVm;
-    const split  = base.filter((s) => !s.scheduledAtMs ? tab === "upcoming" : tab === "upcoming" ? s.scheduledAtMs >= nowMs : s.scheduledAtMs < nowMs);
-    return [...split].sort((a, b) => tab === "upcoming" ? a.scheduledAtMs - b.scheduledAtMs : b.scheduledAtMs - a.scheduledAtMs);
-  }, [sessionsVm, tab, nowMs]);
+  const completedSessions = useMemo(
+    () => sessions.filter(s => s.status === "completed").sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")),
+    [sessions]
+  );
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return list.filter((s) => {
-      const matchQuery  = !q || s.studentName.toLowerCase().includes(q) || s.studentId.toLowerCase().includes(q) || s.vehicleId.toLowerCase().includes(q) || s.id.toLowerCase().includes(q);
-      const matchStatus = statusFilter === "All Status" || s.status === statusFilter;
-      return matchQuery && matchStatus;
+  const resultsBySession = useMemo(() => {
+    const map: Record<string, ResultDoc> = {};
+    for (const r of results) { if (r.session_id) map[r.session_id] = r; }
+    return map;
+  }, [results]);
+
+  // Language options from real data
+  const allLanguages = useMemo(() => {
+    const set = new Set<string>();
+    instructors.forEach(i => i.languages?.forEach(l => set.add(l)));
+    return ["All", ...Array.from(set).sort()];
+  }, [instructors]);
+
+  const allSpecialties = useMemo(() => {
+    const set = new Set<string>();
+    instructors.forEach(i => i.specialties?.forEach(s => set.add(s)));
+    return ["All", ...Array.from(set).sort()];
+  }, [instructors]);
+
+  const filteredInstructors = useMemo(() => {
+    return instructors.filter(i => {
+      if (langFilter !== "All" && !(i.languages || []).includes(langFilter)) return false;
+      if (specialtyFilter !== "All" && !(i.specialties || []).includes(specialtyFilter)) return false;
+      return true;
     });
-  }, [list, query, statusFilter]);
+  }, [instructors, langFilter, specialtyFilter]);
+
+  // AI feedback & comments from dashboard
+  const aiFeedback          = dashData?.ai_feedback ?? [];
+  const instructorComments  = dashData?.instructor_comments ?? [];
+  const achievements        = dashData?.achievements ?? [];
+
+  // ── Booking Flow ───────────────────────────────────────────────────
+
+  const openBookingModal = async (instructor: InstructorProfile) => {
+    setSelectedInstructor(instructor);
+    setSelectedSlot(null);
+    setShowBooking(true);
+    setSlotsLoading(true);
+    try {
+      const data = await apiGet(`/instructors/${instructor.instructor_id}/availability`);
+      setSlots(Array.isArray(data) ? data : []);
+    } catch { setSlots([]); }
+    finally { setSlotsLoading(false); }
+  };
+
+  const confirmBooking = async () => {
+    if (!selectedSlot) { Alert.alert("Select a time slot"); return; }
+    try {
+      setBookingInProgress(true);
+      const res = await apiPost("/bookings", { slot_id: selectedSlot.slot_id });
+      Alert.alert("Booked! ✅", `Session with ${res?.instructor_name || selectedInstructor?.name} on ${fmtDate(selectedSlot.start_time)} at ${fmtTime(selectedSlot.start_time)}`);
+      setShowBooking(false);
+      await loadAll();
+    } catch (e: any) {
+      Alert.alert("Booking failed", e?.message || "Could not book slot");
+    } finally { setBookingInProgress(false); }
+  };
+
+  const cancelBooking = async (bookingId: string) => {
+    Alert.alert("Cancel Booking", "Are you sure?", [
+      { text: "No" },
+      { text: "Yes, cancel", style: "destructive", onPress: async () => {
+        try {
+          await apiDelete(`/bookings/${bookingId}`);
+          Alert.alert("Cancelled");
+          await loadAll();
+        } catch (e: any) { Alert.alert("Error", e?.message || "Failed"); }
+      }},
+    ]);
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <View style={s.center}>
+        <ActivityIndicator size="large" color={colors.purpleDark} />
+        <Text style={page.centerText}>Loading sessions…</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={$.page} contentContainerStyle={$.content}>
-      <Text style={$.h1}>Training Sessions</Text>
-      <Text style={$.h2}>Manage upcoming bookings and review past session performance</Text>
+    <ScrollView style={s.page} contentContainerStyle={s.content}>
 
-      {/* Create Session */}
-      <View style={$.createCard}>
-        <Text style={$.createTitle}>Create Session</Text>
-        <Text style={$.createSub}>Pick a linked trainee and create a real backend session.</Text>
-
-        <View style={$.createRow}>
-          <DropdownMock
-            value={selectedTraineeId ? (traineeNameById[selectedTraineeId] || selectedTraineeId.slice(0, 10)) : "Select Trainee"}
-            options={learners.length ? learners.map((l) => l.user_id) : ["No linked learners"]}
-            onChange={(v) => { if (learners.some((l) => l.user_id === v)) setSelectedTraineeId(v); }}
-            renderLabel={(id) => traineeNameById[id] || `Trainee ${id?.slice(0, 6)?.toUpperCase?.() || ""}`}
-          />
+      {/* ═══ 1. WELCOME BANNER ═══════════════════════════════════════ */}
+      <View style={s.hero}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.heroTitle}>
+            {studentName ? `Hello, ${studentName}! 👋` : "Welcome back! 👋"}
+          </Text>
+          <Text style={s.heroSub}>Ready to book your next driving session?</Text>
         </View>
-
-        {[
-          { value: vehicleId, onChange: setVehicleId, placeholder: "Vehicle ID (e.g. VEH-2847)" },
-          { value: scheduledAt, onChange: setScheduledAt, placeholder: "scheduled_at ISO e.g. 2026-02-12T10:00:00Z" },
-          { value: durationMin, onChange: setDurationMin, placeholder: "Duration minutes (e.g. 60)", keyboardType: "numeric" as const },
-          { value: notes, onChange: setNotes, placeholder: "Notes (optional)" },
-        ].map((f, i) => (
-          <View key={i} style={$.createRow}>
-            <TextInput value={f.value} onChangeText={f.onChange} placeholder={f.placeholder}
-              placeholderTextColor={colors.placeholder} keyboardType={f.keyboardType}
-              style={$.createInput} />
+        <View style={s.heroStats}>
+          <View style={s.heroStat}>
+            <Text style={s.heroStatNum}>{sessionsCompleted}/{targetSessions}</Text>
+            <Text style={s.heroStatLabel}>Sessions</Text>
           </View>
-        ))}
-
-        <Pressable onPress={createSession} disabled={creating}
-          style={({ pressed }) => [$.createBtn, creating ? { opacity: 0.6 } : null, pressed ? { opacity: 0.9 } : null]}>
-          <Text style={$.createBtnText}>{creating ? "Creating…" : "Create Session"}</Text>
-        </Pressable>
+          <View style={s.heroStat}>
+            <Text style={s.heroStatNum}>{currentScore}%</Text>
+            <Text style={s.heroStatLabel}>Score</Text>
+          </View>
+          <View style={s.heroBadge}>
+            <Text style={s.heroBadgeText}>{badge}</Text>
+          </View>
+        </View>
       </View>
 
-      {/* Reminders */}
-      <View style={$.remindersCard}>
-        <View style={$.remHeader}>
-          <View style={$.remTitleRow}>
-            <Text style={$.remBell}>🔔</Text>
-            <Text style={$.remTitle}>Notifications & Reminders</Text>
-          </View>
-          <View style={$.remBadge}><Text style={$.remBadgeText}>{reminders.length}</Text></View>
-        </View>
-        <View style={{ marginTop: space.md }}>
-          {reminders.map((r) => {
-            const st = REMINDER_STYLE[r.type];
-            return (
-              <View key={r.id} style={$.remItem}>
-                <View style={[$.remIcon, { backgroundColor: st.iconBg, borderColor: st.iconBorder }]}>
-                  <Text style={{ fontSize: 14 }}>{st.icon}</Text>
+      {/* ═══ 2. BOOK A NEW SESSION ═══════════════════════════════════ */}
+      <SectionHeader icon="📅" title="Book a New Session" />
+
+      {/* Filters */}
+      <View style={s.filterRow}>
+        <FilterChips label="Language" options={allLanguages} value={langFilter} onChange={setLangFilter} />
+        <FilterChips label="Specialty" options={allSpecialties} value={specialtyFilter} onChange={setSpecialtyFilter} />
+      </View>
+
+      {/* Instructor Cards */}
+      {filteredInstructors.length === 0 ? (
+        <EmptyCard text="No instructors match your filters" />
+      ) : (
+        <View style={s.instructorGrid}>
+          {filteredInstructors.map(inst => (
+            <Pressable key={inst.instructor_id} style={s.instCard} onPress={() => openBookingModal(inst)}>
+              <View style={s.instTop}>
+                <View style={s.instAvatar}>
+                  <Text style={s.instAvatarText}>{initials(inst.name)}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={$.remItemTitle}>{r.title}</Text>
-                  <Text style={$.remItemTime}>{r.time}</Text>
+                  <Text style={s.instName}>{inst.name}</Text>
+                  <View style={s.instRatingRow}>
+                    <Text style={s.instStars}>{starsString(inst.rating)}</Text>
+                    <Text style={s.instRatingNum}>{inst.rating.toFixed(1)}</Text>
+                    <Text style={s.instReviews}>({inst.total_reviews})</Text>
+                  </View>
                 </View>
               </View>
-            );
-          })}
-        </View>
-      </View>
 
-      {/* Tabs */}
-      <View style={$.tabsWrap}>
-        {(["upcoming", "past"] as const).map((t) => (
-          <Pressable key={t} onPress={() => setTab(t)} style={[$.tabBtn, tab === t && $.tabBtnOn]}>
-            <Text style={[$.tabText, tab === t && $.tabTextOn]}>
-              {t === "upcoming" ? "📅  Upcoming Bookings" : "🕘  Past Sessions"}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+              <View style={s.instMeta}>
+                <Text style={s.instMetaText}>🌐 {(inst.languages || []).join(", ") || "—"}</Text>
+                <Text style={s.instMetaText}>🚗 {inst.vehicle || "—"}</Text>
+                <Text style={s.instMetaText}>📍 {inst.location_area || "—"}</Text>
+                <Text style={s.instMetaText}>💰 {inst.price_per_session} {inst.currency}/session</Text>
+              </View>
 
-      {/* Filter Bar */}
-      <View style={$.filterCard}>
-        <View style={[$.filterRow, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
-          <View style={$.searchWrap}>
-            <Text style={$.searchIcon}>🔎</Text>
-            <TextInput value={query} onChangeText={setQuery}
-              placeholder="Search by trainee ID, session ID, or vehicle..."
-              placeholderTextColor={colors.placeholder} style={$.searchInput} />
-          </View>
-          <View style={[$.filterRight, isWide ? { justifyContent: "flex-end" } : null]}>
-            <DropdownMock
-              value={statusFilter} onChange={(v) => setStatusFilter(v as any)}
-              options={["All Status", "scheduled", "completed", "cancelled", "pending"]}
-            />
-            <View style={$.viewToggle}>
-              {(["list", "calendar"] as const).map((m) => (
-                <Pressable key={m} onPress={() => setViewMode(m)} style={[$.viewBtn, viewMode === m && $.viewBtnOn]}>
-                  <Text style={[$.viewBtnText, viewMode === m && $.viewBtnTextOn]}>
-                    {m === "list" ? "List" : "📅"}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            <Pressable onPress={loadSessions} style={({ pressed }) => [$.refreshBtn, pressed ? { opacity: 0.9 } : null]}>
-              <Text style={$.refreshBtnText}>↻ Refresh</Text>
+              <View style={s.instSpecialties}>
+                {(inst.specialties || []).map((sp, i) => (
+                  <View key={i} style={s.specPill}>
+                    <Text style={s.specText}>{sp}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={s.instBtn}>
+                <Text style={s.instBtnText}>Select & Book</Text>
+              </View>
             </Pressable>
-          </View>
-        </View>
-      </View>
-
-      {/* Session list */}
-      {loading ? (
-        <View style={$.center}>
-          <ActivityIndicator size="large" color={colors.purpleDark} />
-          <Text style={page.centerText}>Loading sessions…</Text>
-        </View>
-      ) : viewMode === "calendar" ? (
-        <View style={$.calendarMock}>
-          <Text style={$.calendarMockTitle}>Calendar view coming soon</Text>
-          <Text style={$.calendarMockSub}>Your session data is loaded — calendar UI is in progress.</Text>
-        </View>
-      ) : (
-        <View style={{ marginTop: 6 }}>
-          {filtered.length === 0 ? (
-            <View style={$.empty}>
-              <Text style={$.emptyTitle}>No sessions found</Text>
-              <Text style={$.emptySub}>Create a session above then refresh.</Text>
-            </View>
-          ) : (
-            filtered.map((row) => <SessionRow key={row.id} s={row} />)
-          )}
+          ))}
         </View>
       )}
+
+      {/* ═══ 3. UPCOMING SESSIONS ════════════════════════════════════ */}
+      <SectionHeader icon="🕒" title="Upcoming Sessions" count={upcomingBookings.length} />
+
+      {upcomingBookings.length === 0 ? (
+        <EmptyCard text="No upcoming sessions. Browse instructors above to book one!" />
+      ) : (
+        upcomingBookings.map(b => (
+          <View key={b.booking_id} style={s.upcomingCard}>
+            <View style={s.upcomingTop}>
+              <View style={s.upcomingAvatar}>
+                <Text style={s.upcomingAvatarText}>{initials(b.instructor_name)}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.upcomingName}>{b.instructor_name || "Instructor"}</Text>
+                <Text style={s.upcomingDate}>{fmtDate(b.start_time)} at {fmtTime(b.start_time)}</Text>
+              </View>
+              <View style={[s.statusPill, { backgroundColor: b.status === "confirmed" ? colors.green : colors.borderMid }]}>
+                <Text style={s.statusPillText}>{b.status}</Text>
+              </View>
+            </View>
+            <View style={s.upcomingActions}>
+              <Pressable style={s.cancelBtn} onPress={() => cancelBooking(b.booking_id)}>
+                <Text style={s.cancelBtnText}>✕ Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        ))
+      )}
+
+      {/* ═══ 4. PAST SESSIONS ════════════════════════════════════════ */}
+      <SectionHeader icon="📋" title="Past Sessions" count={completedSessions.length} />
+
+      {completedSessions.length === 0 ? (
+        <EmptyCard text="No completed sessions yet" />
+      ) : (
+        completedSessions.slice(0, 8).map(sess => {
+          const result = resultsBySession[sess.session_id];
+          const score = result?.analysis?.overall ?? 0;
+          const behavior = result?.analysis?.behavior ?? "—";
+          const outcome = score >= 70 ? "Passed" : "Needs Improvement";
+          const outcomeColor = score >= 70 ? colors.green : colors.redDark;
+
+          return (
+            <Pressable key={sess.session_id} style={s.pastCard}
+              onPress={() => Alert.alert("Report", `View report for session ${sess.session_id.slice(0, 8)}`)}>
+              <View style={s.pastTop}>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.pastDate}>{fmtDate(sess.created_at)}</Text>
+                  <Text style={s.pastInstructor}>Instructor: {sess.instructor_name || "—"}</Text>
+                </View>
+                <View style={[s.outcomePill, { backgroundColor: score >= 70 ? "#DCFCE7" : colors.redLight }]}>
+                  <Text style={[s.outcomeText, { color: outcomeColor }]}>{outcome}</Text>
+                </View>
+              </View>
+              <View style={s.pastBottom}>
+                <View>
+                  <Text style={s.pastScoreLabel}>Score</Text>
+                  <Text style={[s.pastScore, { color: outcomeColor }]}>{score}%</Text>
+                </View>
+                <View style={s.viewReportBtn}>
+                  <Text style={s.viewReportText}>📄 View Report</Text>
+                </View>
+              </View>
+            </Pressable>
+          );
+        })
+      )}
+
+      {/* ═══ 5. FEEDBACK & COMMENTS ══════════════════════════════════ */}
+      {(aiFeedback.length > 0 || instructorComments.length > 0) && (
+        <>
+          <SectionHeader icon="💬" title="Recent Feedback" />
+          {aiFeedback.map((f: any, i: number) => (
+            <View key={`fb-${i}`} style={[s.feedbackCard, { backgroundColor: tint.blue.bg, borderColor: tint.blue.border }]}>
+              <Text style={{ fontSize: 18 }}>{f.icon || "💡"}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.feedbackTitle, { color: colors.blueDark }]}>{f.title || "Tip"}</Text>
+                <Text style={[s.feedbackMsg, { color: colors.blueDeep }]}>{f.message || ""}</Text>
+              </View>
+            </View>
+          ))}
+          {instructorComments.map((c: any, i: number) => (
+            <View key={`ic-${i}`} style={[s.feedbackCard, { backgroundColor: tint.purple.bg, borderColor: tint.purple.border }]}>
+              <Text style={{ fontSize: 18 }}>💬</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.feedbackTitle, { color: colors.purpleDark }]}>Instructor Comment</Text>
+                <Text style={[s.feedbackMsg, { color: colors.purpleDeep || colors.purpleDark }]}>{c.text || ""}</Text>
+                {c.rating > 0 && <Text style={s.feedbackRating}>{"⭐".repeat(c.rating)}</Text>}
+              </View>
+            </View>
+          ))}
+        </>
+      )}
+
+      {/* ═══ 6. ACHIEVEMENTS ═════════════════════════════════════════ */}
+      {achievements.length > 0 && (
+        <>
+          <SectionHeader icon="🏆" title="Your Achievements" />
+          <View style={s.achGrid}>
+            {achievements.map((a: any, i: number) => (
+              <View key={a.id || i} style={[s.achCard, a.earned ? s.achEarned : s.achLocked]}>
+                <Text style={s.achIcon}>{a.icon || "🏅"}</Text>
+                <Text style={s.achTitle}>{a.title}</Text>
+                <Text style={s.achSub}>{a.subtitle || ""}</Text>
+                <View style={[s.achPill, a.earned ? s.achPillOn : s.achPillOff]}>
+                  <Text style={[s.achPillText, a.earned ? { color: "#FFF" } : { color: colors.subtextAlt }]}>
+                    {a.earned ? "✓ Earned" : "🔒 Locked"}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+
+      {/* ═══ MOTIVATION BANNER ═══════════════════════════════════════ */}
+      <View style={s.motivationBanner}>
+        <Text style={{ fontSize: 28 }}>🎉</Text>
+        <Text style={s.motivationTitle}>You're building confidence — keep going!</Text>
+        <Text style={s.motivationSub}>{targetSessions - sessionsCompleted} more sessions to complete your training program</Text>
+      </View>
+
+      {/* ═══ BOOKING MODAL ═══════════════════════════════════════════ */}
+      <Modal visible={showBooking} animationType="slide" transparent>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <ScrollView>
+              <View style={s.modalHeader}>
+                <Text style={s.modalTitle}>Book Your Session</Text>
+                <Pressable onPress={() => setShowBooking(false)}>
+                  <Text style={s.modalClose}>✕</Text>
+                </Pressable>
+              </View>
+
+              {selectedInstructor && (
+                <>
+                  {/* Instructor summary */}
+                  <View style={s.modalInstRow}>
+                    <View style={s.modalInstAvatar}>
+                      <Text style={s.modalInstAvatarText}>{initials(selectedInstructor.name)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.modalInstName}>{selectedInstructor.name}</Text>
+                      <Text style={s.modalInstMeta}>
+                        {starsString(selectedInstructor.rating)} {selectedInstructor.rating.toFixed(1)} · {(selectedInstructor.languages || []).join(", ")}
+                      </Text>
+                      <Text style={s.modalInstMeta}>
+                        {selectedInstructor.price_per_session} {selectedInstructor.currency}/session
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Available slots */}
+                  <Text style={s.modalSectionTitle}>Available Time Slots</Text>
+
+                  {slotsLoading ? (
+                    <ActivityIndicator style={{ marginVertical: 20 }} />
+                  ) : slots.length === 0 ? (
+                    <Text style={s.modalEmpty}>No available slots in the next 2 weeks</Text>
+                  ) : (
+                    <View style={s.slotsGrid}>
+                      {slots.map(slot => {
+                        const selected = selectedSlot?.slot_id === slot.slot_id;
+                        return (
+                          <Pressable key={slot.slot_id}
+                            style={[s.slotChip, selected && s.slotChipSelected]}
+                            onPress={() => setSelectedSlot(slot)}>
+                            <Text style={[s.slotDate, selected && { color: "#FFF" }]}>{fmtDate(slot.start_time)}</Text>
+                            <Text style={[s.slotTime, selected && { color: "#FFF" }]}>{fmtTime(slot.start_time)}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* Summary */}
+                  {selectedSlot && (
+                    <View style={s.bookingSummary}>
+                      <Text style={s.bookingSummaryTitle}>✅ Booking Summary</Text>
+                      <Text style={s.bookingSummaryText}>
+                        Session with {selectedInstructor.name} on {fmtDate(selectedSlot.start_time)} at {fmtTime(selectedSlot.start_time)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Actions */}
+                  <View style={s.modalActions}>
+                    <Pressable
+                      style={[s.confirmBtn, (!selectedSlot || bookingInProgress) && { opacity: 0.5 }]}
+                      onPress={confirmBooking}
+                      disabled={!selectedSlot || bookingInProgress}>
+                      <Text style={s.confirmBtnText}>
+                        {bookingInProgress ? "Booking…" : "✓ Confirm Booking"}
+                      </Text>
+                    </Pressable>
+                    <Pressable style={s.modalCancelBtn} onPress={() => setShowBooking(false)}>
+                      <Text style={s.modalCancelText}>Cancel</Text>
+                    </Pressable>
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Sub-Components ───────────────────────────────────────────────────────────
 
-function SessionRow({ s: vm }: { s: SessionRowVm }) {
-  const p = STATUS_PILL[vm.status] || STATUS_PILL.scheduled;
+function SectionHeader({ icon, title, count }: { icon: string; title: string; count?: number }) {
   return (
-    <View style={$.sessionRow}>
-      <View style={$.sessionLeft}>
-        <View style={$.avatar}><Text style={$.avatarText}>{vm.initials}</Text></View>
-        <View style={{ flex: 1 }}>
-          <View style={$.nameRow}>
-            <Text style={$.studentName} numberOfLines={1}>{vm.studentName}</Text>
-            <View style={[$.statusPill, { backgroundColor: p.bg, borderColor: p.border }]}>
-              <Text style={[$.statusPillText, { color: p.text }]}>{p.label}</Text>
-            </View>
-          </View>
-          <Text style={$.instructorLine}>🆔 Session: {vm.id}</Text>
-        </View>
-      </View>
-      <View style={$.sessionRight}>
-        <MetaItem icon="🚙" label="Vehicle" value={vm.vehicleId} bg={tint.blue.bg}   border={tint.blue.border}  />
-        <MetaItem icon="📅" label="Date"    value={vm.dateLabel} bg={tint.green.bg}  border={tint.green.border} />
-        <MetaItem icon="🕒" label="Time"    value={vm.timeLabel} bg={tint.purple.bg} border={tint.purple.border}/>
-        <Pressable onPress={() => Alert.alert("Next", `Create a report screen: GET /sessions/${vm.id}/report`)}
-          style={({ pressed }) => [$.moreBtn, pressed ? { opacity: 0.7 } : null]}>
-          <Text style={$.moreText}>⋮</Text>
+    <View style={s.sectionHeader}>
+      <Text style={{ fontSize: 16 }}>{icon}</Text>
+      <Text style={s.sectionTitle}>{title}</Text>
+      {count !== undefined && count > 0 && (
+        <View style={s.countBadge}><Text style={s.countBadgeText}>{count}</Text></View>
+      )}
+    </View>
+  );
+}
+
+function FilterChips({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterChipsScroll}>
+      {options.map(opt => (
+        <Pressable key={opt} style={[s.filterChip, value === opt && s.filterChipActive]} onPress={() => onChange(opt)}>
+          <Text style={[s.filterChipText, value === opt && s.filterChipTextActive]}>{opt}</Text>
         </Pressable>
-      </View>
-    </View>
+      ))}
+    </ScrollView>
   );
 }
 
-function MetaItem({ icon, label, value, bg, border }: { icon: string; label: string; value: string; bg: string; border: string }) {
+function EmptyCard({ text }: { text: string }) {
   return (
-    <View style={$.metaItem}>
-      <View style={[$.metaIconCircle, { backgroundColor: bg, borderColor: border }]}>
-        <Text style={{ fontSize: 14 }}>{icon}</Text>
-      </View>
-      <View>
-        <Text style={$.metaLabel}>{label}</Text>
-        <Text style={$.metaValue} numberOfLines={1}>{value}</Text>
-      </View>
+    <View style={s.emptyCard}>
+      <Text style={s.emptyText}>{text}</Text>
     </View>
-  );
-}
-
-function DropdownMock({ value, options, onChange, renderLabel }: { value: string; options: string[]; onChange: (v: string) => void; renderLabel?: (v: string) => string }) {
-  const index = Math.max(0, options.indexOf(value));
-  return (
-    <Pressable onPress={() => onChange(options[(index + 1) % options.length])}
-      style={({ pressed }) => [$.dropdown, pressed ? { opacity: 0.9 } : null]}>
-      <Text style={$.dropdownText}>{renderLabel ? renderLabel(value) : value}</Text>
-      <Text style={$.dropdownChevron}>▾</Text>
-    </Pressable>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const $ = StyleSheet.create({
-  // Screen
-  page:    { flex: 1, backgroundColor: "#F5F7FB" },
-  content: { padding: space.page, paddingBottom: 26 },
-  h1: { ...type_.pageTitleLg },
-  h2: { marginTop: 6, ...type_.pageSubtitleBold, marginBottom: 14 },
+const s = StyleSheet.create({
+  page:    { flex: 1, backgroundColor: colors.pageBg },
+  content: { padding: space.page, paddingBottom: 40, gap: 12 },
+  center:  { flex: 1, alignItems: "center", justifyContent: "center", padding: space.xxl },
 
-  // Create card
-  createCard:    { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: 14, marginBottom: space.md },
-  createTitle:   { ...type_.sectionTitle },
-  createSub:     { marginTop: 6, ...type_.labelSm, fontWeight: "800" },
-  createRow:     { marginTop: 10 },
-  createInput:   { minHeight: 46, paddingHorizontal: space.md, backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.input, color: colors.textAlt, fontWeight: "800", fontSize: 12 },
-  createBtn:     { marginTop: space.md, minHeight: 46, borderRadius: radius.input, backgroundColor: colors.darkBtn, alignItems: "center", justifyContent: "center" },
-  createBtnText: { ...type_.btnSm },
+  // Hero
+  hero:          { borderRadius: radius.cardXl, padding: space.xl, backgroundColor: colors.purpleDark, gap: 14 },
+  heroTitle:     { color: "#FFF", fontWeight: "900", fontSize: 16 },
+  heroSub:       { color: "rgba(255,255,255,0.8)", fontWeight: "700", fontSize: 12, marginTop: 4 },
+  heroStats:     { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 8 },
+  heroStat:      { alignItems: "center" },
+  heroStatNum:   { color: "#FFF", fontWeight: "900", fontSize: 20 },
+  heroStatLabel: { color: "rgba(255,255,255,0.7)", fontWeight: "700", fontSize: 11, marginTop: 2 },
+  heroBadge:     { backgroundColor: "rgba(255,255,255,0.2)", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
+  heroBadgeText: { color: "#FFF", fontWeight: "900", fontSize: 11 },
 
-  // Reminders
-  remindersCard: { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: 14 },
-  remHeader:     { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  remTitleRow:   { flexDirection: "row", alignItems: "center", gap: 10 },
-  remBell:       { fontSize: 14 },
-  remTitle:      { ...type_.sectionTitle },
-  remBadge:      { backgroundColor: colors.redDeep, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
-  remBadgeText:  { color: "#FFFFFF", fontWeight: "900", fontSize: 11 },
-  remItem:       { flexDirection: "row", alignItems: "center", gap: space.md, backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.borderLight, borderRadius: radius.card, padding: space.md, marginBottom: 10 },
-  remIcon:       { width: 36, height: 36, borderRadius: radius.input, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  remItemTitle:  { ...type_.body, fontWeight: "800" },
-  remItemTime:   { marginTop: 6, ...type_.meta },
+  // Section header
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 },
+  sectionTitle:  { ...type_.sectionTitle, flex: 1 },
+  countBadge:    { backgroundColor: colors.purpleDark, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 3 },
+  countBadgeText:{ color: "#FFF", fontWeight: "900", fontSize: 10 },
 
-  // Tabs
-  tabsWrap:  { marginTop: 14, flexDirection: "row", backgroundColor: "#EEF2F6", borderRadius: radius.card, padding: 4 },
-  tabBtn:    { flex: 1, paddingVertical: 10, borderRadius: radius.input, alignItems: "center" },
-  tabBtnOn:  { backgroundColor: colors.cardBg },
-  tabText:   { color: colors.subtextAlt, fontWeight: "900", fontSize: 12 },
-  tabTextOn: { color: colors.textAlt },
+  // Filters
+  filterRow:           { gap: 8, marginBottom: 4 },
+  filterChipsScroll:   { marginBottom: 6 },
+  filterChip:          { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cardBg, marginRight: 8 },
+  filterChipActive:    { backgroundColor: colors.purpleDark, borderColor: colors.purpleDark },
+  filterChipText:      { fontWeight: "800", fontSize: 12, color: colors.label },
+  filterChipTextActive:{ color: "#FFF" },
 
-  // Filter bar
-  filterCard:     { marginTop: space.md, backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: space.md },
-  filterRow:      { gap: 10 },
-  searchWrap:     { flex: 1, minHeight: 46, flexDirection: "row", alignItems: "center", backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.input, paddingHorizontal: space.md },
-  searchIcon:     { marginRight: 8, fontSize: 14 },
-  searchInput:    { flex: 1, color: colors.textAlt, fontSize: 13, fontWeight: "700" },
-  filterRight:    { flexDirection: "row", flexWrap: "wrap", gap: 10, alignItems: "center" },
-  dropdown:       { minHeight: 46, minWidth: 160, paddingHorizontal: space.md, flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.input },
-  dropdownText:   { color: colors.textAlt, fontWeight: "800", fontSize: 12, flex: 1 },
-  dropdownChevron:{ color: colors.subtextAlt, fontWeight: "900" },
-  viewToggle:     { flexDirection: "row", backgroundColor: "#EEF2F6", borderRadius: radius.input, padding: 3 },
-  viewBtn:        { paddingHorizontal: space.md, paddingVertical: 10, borderRadius: radius.md },
-  viewBtnOn:      { backgroundColor: colors.darkBtn },
-  viewBtnText:    { color: colors.subtextAlt, fontWeight: "900", fontSize: 12 },
-  viewBtnTextOn:  { color: "#FFFFFF" },
-  refreshBtn:     { minHeight: 46, paddingHorizontal: 14, borderRadius: radius.input, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cardBg, alignItems: "center", justifyContent: "center" },
-  refreshBtnText: { ...type_.body, fontWeight: "900", color: colors.textAlt },
+  // Instructor cards
+  instructorGrid: { gap: 12 },
+  instCard:       { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: 14 },
+  instTop:        { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
+  instAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.purpleDark, alignItems: "center", justifyContent: "center" },
+  instAvatarText: { color: "#FFF", fontWeight: "900", fontSize: 14 },
+  instName:       { fontWeight: "900", fontSize: 14, color: colors.textAlt },
+  instRatingRow:  { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  instStars:      { color: "#F59E0B", fontSize: 12 },
+  instRatingNum:  { fontWeight: "900", fontSize: 12, color: colors.textAlt },
+  instReviews:    { fontSize: 11, color: colors.subtext },
+  instMeta:       { gap: 4, marginBottom: 10 },
+  instMetaText:   { fontSize: 12, fontWeight: "700", color: colors.label },
+  instSpecialties:{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 },
+  specPill:       { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.pageBg },
+  specText:       { fontSize: 11, fontWeight: "800", color: colors.label },
+  instBtn:        { backgroundColor: colors.purpleDark, borderRadius: radius.input, paddingVertical: 12, alignItems: "center" },
+  instBtnText:    { color: "#FFF", fontWeight: "900", fontSize: 13 },
 
-  // States
-  center:           { alignItems: "center", justifyContent: "center", padding: space.lg },
-  calendarMock:     { marginTop: space.md, backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: space.lg, alignItems: "center" },
-  calendarMockTitle:{ ...type_.sectionTitle },
-  calendarMockSub:  { marginTop: 6, ...type_.labelSm, fontWeight: "800" },
-  empty:            { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: space.lg, alignItems: "center" },
-  emptyTitle:       { ...type_.sectionTitle },
-  emptySub:         { marginTop: 6, ...type_.labelSm, fontWeight: "800", textAlign: "center" },
+  // Upcoming cards
+  upcomingCard:      { backgroundColor: colors.cardBg, borderWidth: 2, borderColor: colors.border, borderRadius: radius.cardLg, padding: 14 },
+  upcomingTop:       { flexDirection: "row", alignItems: "center", gap: 12 },
+  upcomingAvatar:    { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.purpleDark, alignItems: "center", justifyContent: "center" },
+  upcomingAvatarText:{ color: "#FFF", fontWeight: "900", fontSize: 13 },
+  upcomingName:      { fontWeight: "900", fontSize: 13, color: colors.textAlt },
+  upcomingDate:      { fontSize: 12, fontWeight: "700", color: colors.subtext, marginTop: 2 },
+  statusPill:        { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  statusPillText:    { color: "#FFF", fontWeight: "900", fontSize: 11, textTransform: "capitalize" as any },
+  upcomingActions:   { flexDirection: "row", justifyContent: "flex-end", marginTop: 12, gap: 10 },
+  cancelBtn:         { borderWidth: 1, borderColor: colors.redDark, borderRadius: radius.input, paddingHorizontal: 16, paddingVertical: 8 },
+  cancelBtnText:     { color: colors.redDark, fontWeight: "900", fontSize: 12 },
 
-  // Session row
-  sessionRow:     { marginTop: 10, backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.md },
-  sessionLeft:    { flexDirection: "row", alignItems: "center", gap: space.md, flex: 1 },
-  avatar:         { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.indigoBg, alignItems: "center", justifyContent: "center" },
-  avatarText:     { color: colors.indigo, fontWeight: "900", fontSize: 12 },
-  nameRow:        { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" },
-  studentName:    { ...type_.sectionTitle, maxWidth: 220 },
-  instructorLine: { marginTop: 6, ...type_.meta },
-  statusPill:     { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
-  statusPillText: { fontWeight: "900", fontSize: 11 },
-  sessionRight:   { flexDirection: "row", alignItems: "center", gap: space.md, flexWrap: "wrap", justifyContent: "flex-end" },
-  metaItem:       { flexDirection: "row", alignItems: "center", gap: 10, maxWidth: 220 },
-  metaIconCircle: { width: 36, height: 36, borderRadius: radius.input, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  metaLabel:      { ...type_.meta },
-  metaValue:      { ...type_.metaValue },
-  moreBtn:        { width: 34, height: 34, borderRadius: radius.input, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center", backgroundColor: colors.cardBg },
-  moreText:       { color: colors.textAlt, fontWeight: "900", fontSize: 16 },
+  // Past sessions
+  pastCard:       { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: 14 },
+  pastTop:        { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  pastDate:       { fontWeight: "900", fontSize: 13, color: colors.textAlt },
+  pastInstructor: { fontSize: 12, fontWeight: "700", color: colors.subtext, marginTop: 3 },
+  outcomePill:    { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
+  outcomeText:    { fontWeight: "900", fontSize: 11 },
+  pastBottom:     { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
+  pastScoreLabel: { fontSize: 11, fontWeight: "700", color: colors.label },
+  pastScore:      { fontWeight: "900", fontSize: 20 },
+  viewReportBtn:  { borderWidth: 1, borderColor: colors.border, borderRadius: radius.input, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.cardBg },
+  viewReportText: { fontWeight: "900", fontSize: 12, color: colors.textAlt },
+
+  // Feedback
+  feedbackCard:  { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14, borderRadius: radius.card, borderWidth: 1, marginBottom: 8 },
+  feedbackTitle: { fontWeight: "900", fontSize: 13, marginBottom: 3 },
+  feedbackMsg:   { fontSize: 12, fontWeight: "700", lineHeight: 18 },
+  feedbackRating:{ marginTop: 4, fontSize: 12 },
+
+  // Achievements
+  achGrid:     { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  achCard:     { borderRadius: radius.card, borderWidth: 2, padding: 14, alignItems: "center", width: "47%" as any },
+  achEarned:   { backgroundColor: "#FFFBEB", borderColor: "#FDE68A" },
+  achLocked:   { backgroundColor: colors.pageBg, borderColor: colors.border },
+  achIcon:     { fontSize: 28, marginBottom: 6 },
+  achTitle:    { fontWeight: "900", fontSize: 12, color: colors.textAlt, textAlign: "center" },
+  achSub:      { fontSize: 11, fontWeight: "700", color: colors.subtext, textAlign: "center", marginTop: 4 },
+  achPill:     { marginTop: 8, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  achPillOn:   { backgroundColor: colors.purpleDark },
+  achPillOff:  { backgroundColor: colors.borderMid },
+  achPillText: { fontWeight: "900", fontSize: 10 },
+
+  // Motivation
+  motivationBanner: { marginTop: 8, borderRadius: radius.card, borderWidth: 2, borderColor: "#BBF7D0", backgroundColor: "#F0FDF4", padding: space.lg, alignItems: "center", gap: 6 },
+  motivationTitle:  { fontWeight: "900", fontSize: 14, color: "#166534", textAlign: "center" },
+  motivationSub:    { fontSize: 12, fontWeight: "700", color: "#15803D", textAlign: "center" },
+
+  // Empty
+  emptyCard: { backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.cardLg, padding: space.lg, alignItems: "center" },
+  emptyText: { fontWeight: "800", fontSize: 12, color: colors.subtext, textAlign: "center" },
+
+  // Modal
+  modalOverlay:      { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: 20 },
+  modalCard:         { backgroundColor: colors.cardBg, borderRadius: radius.cardXl, maxHeight: "85%" as any, padding: 20 },
+  modalHeader:       { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
+  modalTitle:        { fontWeight: "900", fontSize: 18, color: colors.textAlt },
+  modalClose:        { fontSize: 22, color: colors.subtext, padding: 4 },
+  modalInstRow:      { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: colors.pageBg, borderRadius: radius.card, padding: 14, marginBottom: 16 },
+  modalInstAvatar:   { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.purpleDark, alignItems: "center", justifyContent: "center" },
+  modalInstAvatarText:{ color: "#FFF", fontWeight: "900", fontSize: 16 },
+  modalInstName:     { fontWeight: "900", fontSize: 15, color: colors.textAlt },
+  modalInstMeta:     { fontSize: 12, fontWeight: "700", color: colors.subtext, marginTop: 2 },
+  modalSectionTitle: { fontWeight: "900", fontSize: 14, color: colors.textAlt, marginBottom: 10 },
+  modalEmpty:        { textAlign: "center", color: colors.subtext, fontWeight: "700", fontSize: 12, marginVertical: 20 },
+
+  // Slots
+  slotsGrid:       { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
+  slotChip:        { borderWidth: 1, borderColor: colors.border, borderRadius: radius.input, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.pageBg, alignItems: "center" },
+  slotChipSelected:{ backgroundColor: colors.purpleDark, borderColor: colors.purpleDark },
+  slotDate:        { fontWeight: "900", fontSize: 11, color: colors.textAlt },
+  slotTime:        { fontWeight: "700", fontSize: 11, color: colors.subtext, marginTop: 2 },
+
+  // Booking summary
+  bookingSummary:     { backgroundColor: "#EFF6FF", borderWidth: 1, borderColor: "#BFDBFE", borderRadius: radius.card, padding: 14, marginBottom: 16 },
+  bookingSummaryTitle:{ fontWeight: "900", fontSize: 13, color: "#1E40AF", marginBottom: 4 },
+  bookingSummaryText: { fontSize: 12, fontWeight: "700", color: "#1D4ED8" },
+
+  // Modal actions
+  modalActions:   { gap: 10, marginTop: 8 },
+  confirmBtn:     { backgroundColor: colors.purpleDark, borderRadius: radius.input, paddingVertical: 14, alignItems: "center" },
+  confirmBtnText: { color: "#FFF", fontWeight: "900", fontSize: 14 },
+  modalCancelBtn: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.input, paddingVertical: 12, alignItems: "center" },
+  modalCancelText:{ fontWeight: "900", fontSize: 13, color: colors.textAlt },
 });
