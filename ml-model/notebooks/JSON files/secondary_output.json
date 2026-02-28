@@ -1,0 +1,5255 @@
+[
+    {
+        "session_id": 0,
+        "road_type": "Secondary",
+        "performance_score": 24.0,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.350809164700545,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.553245686365935,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.245833333333334,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.510120495054002,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.488333333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.245833333333334,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.050888783662224,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.6241666666666665,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.245833333333334,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.658917265924458,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.746666666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.245833333333334,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.565061634705726,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.824166666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.245833333333334,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.252314865329886,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.839166666666666,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.245833333333334,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.931042529291332,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.798333333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.183333333333334,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.30575681411588,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.75,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.10625,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.399413805926432,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.581666666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.683659476953807,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.450833333333334,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.29923601262158,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.34,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.908222604658672,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.175833333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.003658512841437,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.700552611163809,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 10.693683061812,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.297360602332366,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.631385944497143,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 10.693683061812,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.500780354461933,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.44805261116381,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 10.693683061812,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.758387005966737,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.37305261116381,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 10.693683061812,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.630403551499452,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.264719277830476,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 10.693683061812,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.295810089025206,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.263052611163809,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 10.693683061812,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.776502311019934,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.78333333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.014620803766126,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.373484481613083,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.875,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9967955259883484,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.923760043587299,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.875,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0040811741364966,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.821732005855063,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.09166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.053615925925926,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.393478765163838,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.09166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0782126851851852,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 13.626730944860634,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.09166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0796927777777778,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.914418483256133,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.09166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0678261111111111,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.74274300498812,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.09166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0600062037037037,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.545596987759959,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 89.74166666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0725608333333332,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.693929496596107,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 89.94583333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.062191388888889,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.568838686114844,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 89.85416666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0636708333333336,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.007678870712715,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 89.85416666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.074509259259259,
+                        "unit": "ratio"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 1,
+        "road_type": "Secondary",
+        "performance_score": 76.67,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 13.762739352055354,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 89.85416666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.081784722222222,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.858008784903333,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 89.35416666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0718805555555555,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.227616812112881,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.6808473081386,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0527452530396944,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 8.468375065368058,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 87.76418064147192,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0548959474841388,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 6.882633968681098,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.84751397480527,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.05244867896562,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.297291788529494,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.48375,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 10.635,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Drowsy",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 3.1767808495346217,
+                "trigger_features": []
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.664001139040898,
+                "trigger_features": []
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.2090887677200994,
+                "trigger_features": []
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.6171780229016997,
+                "trigger_features": []
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.7286584958414988,
+                "trigger_features": []
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.996306072619344,
+                "trigger_features": []
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.273013000763174,
+                "trigger_features": []
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.7681617324660952,
+                "trigger_features": []
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.6197527591739505,
+                "trigger_features": []
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.6100879292523165,
+                "trigger_features": []
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9796883460419117,
+                "trigger_features": []
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.06832204757416,
+                "trigger_features": []
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 3.2667064180909278,
+                "trigger_features": []
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.384128594917563,
+                "trigger_features": []
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.7282580138960113,
+                "trigger_features": []
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.0834413598450254,
+                "trigger_features": []
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.6818204722624253,
+                "trigger_features": []
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4915557652376485,
+                "trigger_features": []
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.6680894952426477,
+                "trigger_features": []
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.011325968077341,
+                "trigger_features": []
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.276632925404103,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.363133209127517,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 6.889419120587486,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.27,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.069130937790805,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.18125,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 6.215059063253859,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.256666666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 2,
+        "road_type": "Secondary",
+        "performance_score": 37.33,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.196016021954609,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.2916666666666665,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.8476562480047765,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.306666666666666,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 6.635321751015572,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.24375,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.426903041799538,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.24375,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.605429403425465,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.216666666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 14.690296844352895,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.678748333333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 305.5587083333333,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 15.231829258047279,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.887022083333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 302.757875,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 15.193284764336799,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.8747275,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 298.2980833333333,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 15.417382717832634,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.7968004166666667,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 296.8715833333334,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 15.511549163990997,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.7456925,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 299.210125,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 15.169901911813687,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.657793333333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 304.2723333333334,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 14.773453612478557,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.3751137399482976,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 298.7374986762576,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 14.784585126877776,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.3050789235450684,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 280.8940965660042,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.7139326017613,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.245416666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.15206582411415,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.30125,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.977743085172259,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.40375,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.170202541022032,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.4675,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.51939418529528,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.553333333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.604393442114361,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.553333333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.675838057865484,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.624583333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.11843605419952,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.8346878814834,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9776935010446204,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.487266016884341,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.31666666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9927011111111111,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.518298426315704,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.5375,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9890202777777776,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.20661409172933,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.64583333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9930763425925924,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 13.148750087414362,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.64583333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0012578240740742,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.73833531960797,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.64583333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.005036064814815,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.699159517664375,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.22083333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.108857824074074,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.074353758497189,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.66666666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1156024537037037,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.235177758809867,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.35,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1170661574074074,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.03651580918779,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.35,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1102791203703704,
+                        "unit": "ratio"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 3,
+        "road_type": "Secondary",
+        "performance_score": 70.0,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.50630877991644,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.35,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1030170833333333,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.060893442850332,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.17916666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.106293564814815,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.772439440278113,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.02083333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1040025,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.100923964042838,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.02083333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0927761111111112,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.551396428997403,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.275,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.084446388888889,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.591942607823237,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 91.65833333333332,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9947110185185184,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.800357870093297,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.26503479828486,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9865058905515336,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 8.592792054439734,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 91.73767406466676,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9736726499218964,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 8.249788142399023,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.66684073133342,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9715248721441186,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 7.646922981550129,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.78767406466676,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9764647101070816,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 6.499848956227197,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.78767406466676,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9860105434404148,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Normal",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.122186860158392,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.5275,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.8935998526499516,
+                "trigger_features": []
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.5961978556117065,
+                "trigger_features": []
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.8200938040263073,
+                "trigger_features": []
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 3.08477190918319,
+                "trigger_features": []
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.3889298875486635,
+                "trigger_features": []
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9435558686460557,
+                "trigger_features": []
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.822334008674586,
+                "trigger_features": []
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.8698852649842883,
+                "trigger_features": []
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.0162709974505733,
+                "trigger_features": []
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.1383948970026734,
+                "trigger_features": []
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.328712852197234,
+                "trigger_features": []
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.1566477457598845,
+                "trigger_features": []
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.2667608176248537,
+                "trigger_features": []
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.085297422958513,
+                "trigger_features": []
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.5801651968779153,
+                "trigger_features": []
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.425714911713041,
+                "trigger_features": []
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.3565278405595915,
+                "trigger_features": []
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4796395213435563,
+                "trigger_features": []
+            }
+        ]
+    },
+    {
+        "session_id": 4,
+        "road_type": "Secondary",
+        "performance_score": 40.0,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.1447514222656214,
+                "trigger_features": []
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.5490794375424644,
+                "trigger_features": []
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.012150941963476,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.425797598372435,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 17.666666666666668,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.422159279454802,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.3116666666666665,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.3002887533997125,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.3116666666666665,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.580665660441406,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.328333333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.538007160329495,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.345,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.062645829510953,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.3075,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.966784308912334,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.299583333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.516071713936606,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.2079166666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.203778677902868,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.14125,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.075385870780373,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.0791666666666666,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.053809171998691,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.067083333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.2587651449716795,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.08375,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.485973704418837,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.08375,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.405150787840741,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.067083333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.749430284677636,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.0504166666666666,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.756811679754553,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.029166666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.849414628612889,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.020833333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 6.2431863624585,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.020833333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.291692456624897,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.157083333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 6.0475,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.552861365175213,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.157083333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 6.0475,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.361537857891125,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.1425,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 6.0475,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.502903407071765,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.1841666666666666,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 6.0475,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.13281051294425,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.219583333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 6.0475,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.360128311459661,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.2404166666666665,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 6.0475,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.708129084101296,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.96708154028808,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9551605555555556,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.790020529935846,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 87.70874820695475,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9592797685185186,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.255548298019745,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 87.72541487362142,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9742283796296296,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.729984728703634,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.675,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9669391203703704,
+                        "unit": "ratio"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 5,
+        "road_type": "Secondary",
+        "performance_score": 42.67,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.025982803099515,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.925,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9617858796296296,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.020357688182024,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 91.14583333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.947855925925926,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.829384240920614,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 91.14583333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9570901851851852,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.217965500027775,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 91.14583333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9684688888888888,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.574380101713938,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.27083333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0087110185185186,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.727853195574951,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.44583333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.087166574074074,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.819796610880653,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.29583333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0979438888888888,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.51708158049207,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.02916666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0927552777777778,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.975226304566124,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.02916666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1136904629629631,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.237779456045455,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.02916666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1235224074074075,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.643921455032295,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 87.6625,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.138884537037037,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.873246522439846,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 87.64166666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1380116203703703,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.214641416182157,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 87.64166666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1307829166666663,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.524229573766931,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.67083333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.1193316666666668,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.512982660521189,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.45416666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.027790648148148,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.205187536377464,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 93.19583333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9924243981481482,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 8.054630938856608,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 94.27772155346624,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9298896911992548,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 6.796912608082768,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 95.01522155346623,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.921108302310366,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 5.25565576463303,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.975416666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 21.02083333333333,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Normal",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.359817596733847,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 3.98375,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 21.02083333333333,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.9258578630894023,
+                "trigger_features": []
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.2196404258740454,
+                "trigger_features": []
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.0967532599544394,
+                "trigger_features": []
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.8919721379184484,
+                "trigger_features": []
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.3656313731040095,
+                "trigger_features": []
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.558459683696937,
+                "trigger_features": []
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9697270875331743,
+                "trigger_features": []
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.626726753960816,
+                "trigger_features": []
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.3467234542762658,
+                "trigger_features": []
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.2408592587362635,
+                "trigger_features": []
+            }
+        ]
+    },
+    {
+        "session_id": 6,
+        "road_type": "Secondary",
+        "performance_score": 60.0,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.2691304113413313,
+                "trigger_features": []
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9988077878791153,
+                "trigger_features": []
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.1626520068485995,
+                "trigger_features": []
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.914468069431278,
+                "trigger_features": []
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.7164707003891941,
+                "trigger_features": []
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.7286281652691957,
+                "trigger_features": []
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.726451962016921,
+                "trigger_features": []
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4018453112328384,
+                "trigger_features": []
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4344852991476458,
+                "trigger_features": []
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.753538889370295,
+                "trigger_features": []
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.5008864171145944,
+                "trigger_features": []
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.132887400868081,
+                "trigger_features": []
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 11.48677239801976,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 8.290949384864042,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 64.87077631473132,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.066423505766567,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 6.452051058599696,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.802790498161265,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.383082308330474,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.720416666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.958215674457823,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.7775,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 3.8193757616566573,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.846666666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 4.3773471504541135,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.83,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 6.85813278953771,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.597083333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 11.540097140831211,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.31405625,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 300.50175,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 17.780548766410682,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.61946125,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 301.6395,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 27.115555673237374,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.854118333333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 305.1347916666667,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 37.09526788651841,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.658405833333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 307.57775,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 36.93245493962661,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.8389704166666663,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 305.6042083333333,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 37.197843189906116,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.89623875,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 300.9295,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 37.240561598547586,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.831211666666667,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 298.6185,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 36.83140726361687,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.7223879166666665,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 298.9088333333333,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 32.45993956714571,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.5120433333333336,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 304.4115,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 27.270608091240046,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.31911125,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 306.87825000000004,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 21.340069833803003,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.069128333333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.579166666666666,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 289.67791666666665,
+                        "unit": "degrees"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 7,
+        "road_type": "Secondary",
+        "performance_score": 33.33,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 12.876855602208654,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 3.1846104166666667,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 269.3752083333333,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.385637506456948,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.477083333333334,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.197640298533623,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.484583333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.444501066795672,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.435416666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.591385515772986,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.402083333333334,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.786068332145982,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.4225,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.894473182849032,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.46875,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.035887992067892,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.497083333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 28.616666666666667,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.657763090516909,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.86666666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9174136111111112,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 13.642738994405093,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.0,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9390671296296296,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 18.104304060425825,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.5245133333333336,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 122.79229166666669,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 18.681186219779313,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.70381125,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 118.57329166666668,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 18.776382516210116,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.816025833333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 118.2435,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 18.91651910107621,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.8798775,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 121.32158333333332,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 19.427346425872997,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.75538,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 124.82766666666669,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 19.155807458536064,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.62910625,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 125.37820833333332,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 19.35570470105433,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.857177083333333,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 122.51783333333331,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Unstable driving",
+                "severity": 1.0,
+                "knn_distance": 17.910555837440764,
+                "trigger_features": [
+                    {
+                        "feature": "Course Deviation",
+                        "value": 2.58986375,
+                        "unit": "degrees"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Average Steering Course",
+                        "value": 120.496625,
+                        "unit": "degrees"
+                    }
+                ]
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 13.419322830167227,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 84.5975,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": -2.1010482870370373,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.682897543251427,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 84.5975,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": -2.0925043055555554,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.598376159600061,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.15208333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": -0.5840779166666666,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.382167584119127,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.15208333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": -0.5770084722222223,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.27183818804827,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.15208333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": -0.5835783796296299,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.996013522268896,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.09041666666667,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.5928420370370371,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.1475914625463,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.29166666666669,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.980282453703704,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.984689197763515,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.89166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9762323148148148,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.231697163130278,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 93.05,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.8811518981481481,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 8.534545593131682,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 94.075,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.866285,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 8.039910835312146,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 94.3375,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.8672288078703704,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 5.94692778854706,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 94.21666666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.8634661111111113,
+                        "unit": "ratio"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 8,
+        "road_type": "Secondary",
+        "performance_score": 86.67,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Normal",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 3.8798093119876143,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.073183451675533,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 22.489085940834507,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.7268519789449046,
+                "trigger_features": []
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.013584052070315,
+                "trigger_features": []
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.1078159851132026,
+                "trigger_features": []
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.505162624253748,
+                "trigger_features": []
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.6392631128252995,
+                "trigger_features": []
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.832296914929745,
+                "trigger_features": []
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.6745322173113528,
+                "trigger_features": []
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4672378319494168,
+                "trigger_features": []
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4417545034963182,
+                "trigger_features": []
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.3795478882866012,
+                "trigger_features": []
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4314487049964135,
+                "trigger_features": []
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.7515723038850015,
+                "trigger_features": []
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.0977788183825776,
+                "trigger_features": []
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.7563098722966568,
+                "trigger_features": []
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.8178782621198581,
+                "trigger_features": []
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9715179344631537,
+                "trigger_features": []
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.5850020940718081,
+                "trigger_features": []
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.3142614735628195,
+                "trigger_features": []
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.278988605259313,
+                "trigger_features": []
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.2617116659214063,
+                "trigger_features": []
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4263306934909088,
+                "trigger_features": []
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9150159557091406,
+                "trigger_features": []
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.609152139432262,
+                "trigger_features": []
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 17.94367122667141,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.202083333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 15.237684057375157,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.15125,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 14.70599380616205,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.9679166666666665,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Normal",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.16970931608341,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 5.034583333333333,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.968812699972569,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.892916666666666,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 7.914044595734356,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.69125,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 9,
+        "road_type": "Secondary",
+        "performance_score": 20.0,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 10.374348528313314,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.5720833333333335,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.013671118294832,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.485416666666667,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.968034594569247,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.38,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.2494537965382,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.354568237841056,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.651697978594104,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.253734904507722,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 8.134587766158836,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.228734904507722,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.143862546112235,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.106234904507722,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Aggressive",
+                "alert_cause": "Harsh acceleration / braking",
+                "severity": 2.0,
+                "knn_distance": 9.713072340725983,
+                "trigger_features": [
+                    {
+                        "feature": "Vertical Acceleration",
+                        "value": 4.032068237841055,
+                        "unit": "m/s\u00b2"
+                    },
+                    {
+                        "feature": "Horizontal Acceleration",
+                        "value": 5.0,
+                        "unit": "m/s\u00b2"
+                    }
+                ]
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 9.929155559803952,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.00833333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.049255450937219,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.165026886853438,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.00833333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9936193398261078,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.912788783751411,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.17083333333332,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9258691083446264,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 11.490920658857192,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.71666666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.90104365199542,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.024198800066259,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.59166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9259619444444444,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 14.959611810499293,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.59166666666668,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9137045370370372,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.329878099538156,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.69166666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.927806574074074,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.2128694429939,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.69166666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9378028703703706,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.158066713288758,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.69166666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.935508888888889,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 15.806200668660235,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 90.69166666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9267250925925926,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 15.625316452445762,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 87.49166666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0164644444444446,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 15.706018931912377,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.80416666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0420337962962962,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.88280974159061,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.55833333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.053269675925926,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.73736974988845,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.55833333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0522030092592594,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.917951583692393,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.55833333333334,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0526789351851853,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.835964467435208,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.45833333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.047125972222222,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 17.06094652933476,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.45833333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0382181018518517,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 17.28407115971444,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.45833333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.0384819907407403,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 17.33958211773311,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 86.45833333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 1.041279675925926,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 27,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 17.26796992924438,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 88.52083333333333,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9854506018518518,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 28,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 16.91029349394885,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 91.92916666666666,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9118073148148148,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 29,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 15.304184044149414,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 92.7125,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.9060335648148148,
+                        "unit": "ratio"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "session_id": 10,
+        "road_type": "Secondary",
+        "performance_score": 88.33,
+        "windows": [
+            {
+                "window_id": 0,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 12.28700403780278,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 95.3125,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.8381505470828148,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 1,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 10.084239391654124,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 96.08333333333331,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.8480528618976295,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 2,
+                "predicted_label": "Drowsy",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 7.928861120854265,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 95.79583333333332,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.859577607268,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 3,
+                "predicted_label": "Normal",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 6.1297391875232865,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 95.79583333333332,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.8646516813420742,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 4,
+                "predicted_label": "Normal",
+                "alert_cause": "Overspeeding",
+                "severity": 3.0,
+                "knn_distance": 4.397183671202807,
+                "trigger_features": [
+                    {
+                        "feature": "Maximum Speed",
+                        "value": 95.79583333333332,
+                        "unit": "km/h"
+                    },
+                    {
+                        "feature": "Speed Ratio",
+                        "value": 0.8655127924531852,
+                        "unit": "ratio"
+                    }
+                ]
+            },
+            {
+                "window_id": 5,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 3.3070989747127917,
+                "trigger_features": []
+            },
+            {
+                "window_id": 6,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.76064838683513,
+                "trigger_features": []
+            },
+            {
+                "window_id": 7,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.8590223474104923,
+                "trigger_features": []
+            },
+            {
+                "window_id": 8,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.9699567514638714,
+                "trigger_features": []
+            },
+            {
+                "window_id": 9,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.6392772283172667,
+                "trigger_features": []
+            },
+            {
+                "window_id": 10,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.3252474223989426,
+                "trigger_features": []
+            },
+            {
+                "window_id": 11,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.3975674102225524,
+                "trigger_features": []
+            },
+            {
+                "window_id": 12,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.014519494289476,
+                "trigger_features": []
+            },
+            {
+                "window_id": 13,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9461366217283076,
+                "trigger_features": []
+            },
+            {
+                "window_id": 14,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.0687497506862926,
+                "trigger_features": []
+            },
+            {
+                "window_id": 15,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.0213103962991665,
+                "trigger_features": []
+            },
+            {
+                "window_id": 16,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.3166611533933557,
+                "trigger_features": []
+            },
+            {
+                "window_id": 17,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.8675076538613453,
+                "trigger_features": []
+            },
+            {
+                "window_id": 18,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.067586065781818,
+                "trigger_features": []
+            },
+            {
+                "window_id": 19,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.3389450074055205,
+                "trigger_features": []
+            },
+            {
+                "window_id": 20,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.1116082101666516,
+                "trigger_features": []
+            },
+            {
+                "window_id": 21,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.475888482270319,
+                "trigger_features": []
+            },
+            {
+                "window_id": 22,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.369279648832317,
+                "trigger_features": []
+            },
+            {
+                "window_id": 23,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.4737976657348875,
+                "trigger_features": []
+            },
+            {
+                "window_id": 24,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.8557578323249793,
+                "trigger_features": []
+            },
+            {
+                "window_id": 25,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 1.9437488327010275,
+                "trigger_features": []
+            },
+            {
+                "window_id": 26,
+                "predicted_label": "Normal",
+                "alert_cause": "No alert",
+                "severity": 0.0,
+                "knn_distance": 2.37398190433592,
+                "trigger_features": []
+            }
+        ]
+    }
+]
