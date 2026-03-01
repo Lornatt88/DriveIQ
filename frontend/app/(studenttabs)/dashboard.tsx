@@ -149,7 +149,6 @@ export default function Dashboard() {
             {studentName ? `Hello, ${studentName} 👋` : "Welcome back 👋"}
           </Text>
           <Text style={s.heroSub}>Great to see you back! Let's keep improving your driving skills.</Text>
-          <Text style={[s.heroSub, { marginTop: 4 }]}>Instructor: {instructorName}</Text>
         </View>
         <View style={s.heroIconBubble}><Text style={s.heroIconText}>🚗</Text></View>
       </View>
