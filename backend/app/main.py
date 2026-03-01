@@ -661,8 +661,9 @@ def trainee_dashboard(current_user=Depends(require_role("trainee"))):
 
     latest = recent_results[0] if recent_results else None
     latest_analysis = (latest.get("analysis") if latest else None) or {}
-    current_score = latest_analysis.get("overall", 0)
-    badge = latest_analysis.get("badge", "Improving")
+    all_scores = [r.get("performance_score") or r.get("analysis", {}).get("overall", 0) for r in recent_results if r]
+    current_score = int(sum(all_scores) / len(all_scores)) if all_scores else 0
+    badge = "Safe Driver" if current_score >= 80 else "Improving" if current_score >= 60 else "Needs Work"
 
     # Format reports for frontend
     recent_reports = []
@@ -687,8 +688,22 @@ def trainee_dashboard(current_user=Depends(require_role("trainee"))):
         })
 
     # ── AI Feedback ─────────────────────────────────────────────────
-    ai_feedback = (latest.get("ai_feedback") if latest else []) or []
-
+    # Use summary_feedback from latest result if available, fall back to ai_feedback array
+    summary_feedback = (latest.get("summary_feedback") if latest else None)
+    raw_ai = (latest.get("ai_feedback") if latest else []) or []
+    
+    if summary_feedback:
+        ai_feedback = [{
+            "id": "summary",
+            "title": "Session Summary",
+            "message": summary_feedback,
+            "icon": "🧠",
+            "score": latest_analysis.get("overall", 0),
+            "priority": "high",
+        }]
+    else:
+        ai_feedback = raw_ai
+        
     # ── Instructor comments ─────────────────────────────────────────
     instructor_comments = []
     for r in recent_results:
@@ -924,6 +939,87 @@ def _pick_csv_for_simulation(road_type: str) -> Path:
     pool = motor_like if (wants_motor and motor_like) else (non_motor_like if non_motor_like else csvs)
     return random.choice(pool)
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# REPORTS — LIST ALL SESSION REPORTS FOR A TRAINEE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ADD this new endpoint:
+
+@app.get("/sessions/my-reports")
+def my_reports(current_user=Depends(require_role("trainee"))):
+    """
+    Returns all completed sessions with summary data for the Reports list page.
+    Each item has enough info to render a card: date, score, road type, window breakdown.
+    """
+    trainee_id = current_user["user_id"]
+
+    # Get all completed sessions
+    sessions = list(
+        sessions_col.find(
+            {"trainee_id": trainee_id, "status": "completed"}
+        ).sort("created_at", -1).limit(50)
+    )
+
+    # Get corresponding results for scores and window summaries
+    session_ids = [s["session_id"] for s in sessions]
+    results = {
+        r["session_id"]: r
+        for r in results_col.find({"session_id": {"$in": session_ids}})
+    }
+
+    out = []
+    for s in sessions:
+        r = results.get(s["session_id"])
+
+        # Score from result or session
+        score = 0
+        passed = False
+        if r:
+            score = r.get("performance_score") or r.get("analysis", {}).get("overall", 0)
+            passed = score >= 60
+        elif s.get("performance_score"):
+            score = s["performance_score"]
+            passed = s.get("passed", score >= 60)
+
+        # Window summary — from result, session, or computed from windows
+        ws = None
+        if r and r.get("window_summary"):
+            ws = r["window_summary"]
+        elif s.get("window_summary"):
+            ws = s["window_summary"]
+        elif r and r.get("windows"):
+            windows = r["windows"]
+            ws = {
+                "total": len(windows),
+                "normal": sum(1 for w in windows if w.get("predicted_label") == "Normal"),
+                "drowsy": sum(1 for w in windows if w.get("predicted_label") == "Drowsy"),
+                "aggressive": sum(1 for w in windows if w.get("predicted_label") == "Aggressive"),
+            }
+
+        if not ws:
+            ws = {"total": 0, "normal": 0, "drowsy": 0, "aggressive": 0}
+
+        # Format date
+        created = s.get("created_at")
+        date_str = "—"
+        if hasattr(created, "strftime"):
+            date_str = created.strftime("%b %d, %Y")
+        elif created:
+            date_str = str(created)[:10]
+
+        out.append({
+            "session_id": s["session_id"],
+            "date": date_str,
+            "road_type": s.get("road_type", r.get("road_type", "—") if r else "—"),
+            "performance_score": int(score),
+            "passed": passed,
+            "duration_minutes": s.get("duration_min", 0),
+            "window_summary": ws,
+            "instructor_name": s.get("instructor_name", "—"),
+        })
+
+    return {"sessions": to_jsonable(out)}
+
 
 @app.get("/sessions")
 def list_sessions(current_user=Depends(get_current_user)):
@@ -933,35 +1029,243 @@ def list_sessions(current_user=Depends(get_current_user)):
         cur = sessions_col.find({"trainee_id": current_user["user_id"]}).sort("created_at", -1)
     return to_jsonable(list(cur))
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# REPORTS — SESSION TIMELINE (all windows for a session)
+# ═══════════════════════════════════════════════════════════════════════════════
 
-@app.get("/sessions/{session_id}/report")
-def session_report(session_id: str, current_user=Depends(get_current_user)):
+# ADD this new endpoint:
+
+@app.get("/sessions/{session_id}/timeline")
+def session_timeline(session_id: str, current_user=Depends(get_current_user)):
+    """
+    Returns all windows for a session with computed time fields.
+    Used by the Session Report detail page for the window timeline grid.
+    """
+    # Verify access
     session = sessions_col.find_one({"session_id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
     if current_user["role"] == "instructor":
-        if session.get("instructor_id") != current_user["instructor_id"]:
+        if session.get("instructor_id") != current_user.get("instructor_id"):
             raise HTTPException(status_code=403, detail="Forbidden")
     else:
         if session.get("trainee_id") != current_user["user_id"]:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-    res = results_col.find_one({"session_id": session_id}, sort=[("created_at", -1)])
-    res = to_jsonable(res) if res else None
+    # Get the result document with windows
+    result = results_col.find_one(
+        {"session_id": session_id},
+        sort=[("created_at", -1)]
+    )
 
-    analysis = (res.get("analysis") if res else None) or {
-        "behavior": "Unknown", "confidence": 0.0, "overall": 0, "badge": "Improving", "probs": {},
+    if not result or not result.get("windows"):
+        return {
+            "session_id": session_id,
+            "road_type": session.get("road_type", "Unknown"),
+            "total_windows": 0,
+            "window_duration_minutes": 4,
+            "windows": [],
+        }
+
+    window_duration = 4  # minutes per window
+
+    enriched = []
+    for w in result["windows"]:
+        wid = w.get("window_id", 0)
+        start_min = wid * window_duration
+        end_min = start_min + window_duration
+
+        enriched.append({
+            **w,
+            "start_time": f"{start_min // 60:02d}:{start_min % 60:02d}",
+            "end_time": f"{end_min // 60:02d}:{end_min % 60:02d}",
+            "is_flagged": w.get("predicted_label", "Normal") != "Normal",
+        })
+
+    return to_jsonable({
+        "session_id": session_id,
+        "road_type": result.get("road_type", session.get("road_type", "Unknown")),
+        "total_windows": len(enriched),
+        "window_duration_minutes": window_duration,
+        "windows": enriched,
+    })
+    
+    
+# ═══════════════════════════════════════════════════════════════════════════════
+# REPORTS — UPDATED SESSION REPORT (replaces your existing one)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# REPLACE your existing @app.get("/sessions/{session_id}/report") with this:
+
+@app.get("/sessions/{session_id}/report")
+def session_report(session_id: str, current_user=Depends(get_current_user)):
+    """
+    Returns session metadata + score + window summary for the Report detail page header.
+    Also returns legacy fields so the dashboard doesn't break.
+    """
+    session = sessions_col.find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    if current_user["role"] == "instructor":
+        if session.get("instructor_id") != current_user.get("instructor_id"):
+            raise HTTPException(status_code=403, detail="Forbidden")
+    else:
+        if session.get("trainee_id") != current_user["user_id"]:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+    result = results_col.find_one(
+        {"session_id": session_id},
+        sort=[("created_at", -1)]
+    )
+
+    # ── Score ───────────────────────────────────────────────────────────
+    score = 0
+    if result:
+        score = result.get("performance_score") or result.get("analysis", {}).get("overall", 0)
+    elif session.get("performance_score"):
+        score = session["performance_score"]
+
+    # ── Window summary ──────────────────────────────────────────────────
+    ws = None
+    if result and result.get("window_summary"):
+        ws = result["window_summary"]
+    elif session.get("window_summary"):
+        ws = session["window_summary"]
+    elif result and result.get("windows"):
+        windows = result["windows"]
+        ws = {
+            "total": len(windows),
+            "normal": sum(1 for w in windows if w.get("predicted_label") == "Normal"),
+            "drowsy": sum(1 for w in windows if w.get("predicted_label") == "Drowsy"),
+            "aggressive": sum(1 for w in windows if w.get("predicted_label") == "Aggressive"),
+        }
+
+    if not ws:
+        ws = {"total": 0, "normal": 0, "drowsy": 0, "aggressive": 0}
+
+    # ── Date formatting ─────────────────────────────────────────────────
+    created = session.get("created_at")
+    date_str = "—"
+    time_str = "—"
+    if hasattr(created, "strftime"):
+        date_str = created.strftime("%b %d, %Y")
+        time_str = created.strftime("%I:%M %p")
+
+    # ── Legacy fields (so existing dashboard code doesn't break) ────────
+    analysis = {}
+    ai_feedback = []
+    if result:
+        analysis = result.get("analysis") or {
+            "behavior": "Unknown", "confidence": 0.0,
+            "overall": int(score), "badge": "Improving", "probs": {},
+        }
+        ai_feedback = result.get("ai_feedback") or []
+
+    return to_jsonable({
+        # New fields for Reports page
+        "session_summary": {
+            "date": date_str,
+            "time": time_str,
+            "instructor": session.get("instructor_name", "—"),
+            "vehicle_id": session.get("vehicle_id", "—"),
+            "duration_minutes": session.get("duration_min", 0),
+        },
+        "overall_score": {
+            "score": int(score),
+            "passed": score >= 60,
+        },
+        "road_type": session.get("road_type", "Unknown"),
+        "window_summary": ws,
+        "summary_feedback": result.get("summary_feedback") if result else None,
+
+        # Legacy fields (for backward compat with dashboard)
+        "session": session,
+        "analysis": analysis,
+        "ai_feedback": ai_feedback,
+        "instructor_notes": session.get("instructor_notes", ""),
+        "windows": (result.get("windows") if result else []),
+    })
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LLM FEEDBACK GENERATION — PLACEHOLDER FOR SAIF'S CODE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ADD this endpoint — it's a stub that Saif will fill in with the actual LLM call:
+
+@app.post("/sessions/{session_id}/generate-feedback")
+def generate_session_feedback(session_id: str, current_user=Depends(require_role("instructor"))):
+    """
+    Trigger LLM feedback generation for all windows in a session.
+    
+    TODO (Saif): Replace the placeholder with actual LLM call.
+    The function should:
+      1. Read all windows from results_col for this session_id
+      2. For each window, call the LLM with the window metrics
+      3. Generate a session summary
+      4. Update the result document with feedback per window + summary
+    
+    Expected input to LLM per window:
+    {
+        "window_id": 13,
+        "predicted_label": "Normal",
+        "alert_cause": "Overspeeding",
+        "severity": 3.0,
+        "knn_distance": 4.37,
+        "trigger_features": [
+            {"feature": "Maximum Speed", "value": 61.16, "unit": "km/h"},
+            {"feature": "Speed Ratio", "value": -52.63, "unit": "ratio"}
+        ]
     }
+    
+    Expected output: a feedback string per window + overall summary string.
+    """
+    session = sessions_col.find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if session.get("instructor_id") != current_user.get("instructor_id"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    result = results_col.find_one(
+        {"session_id": session_id},
+        sort=[("created_at", -1)]
+    )
+    if not result or not result.get("windows"):
+        raise HTTPException(status_code=400, detail="No window data found for this session")
+
+    windows = result["windows"]
+
+    # ──────────────────────────────────────────────────────────────────────
+    # TODO (Saif): Replace this block with actual LLM calls
+    # ──────────────────────────────────────────────────────────────────────
+    #
+    # from app.llm.feedback import generate_window_feedback, generate_session_summary
+    #
+    # for w in windows:
+    #     if w.get("predicted_label") != "Normal" or not w.get("feedback"):
+    #         w["feedback"] = generate_window_feedback(w)
+    #
+    # summary = generate_session_summary(windows, session.get("road_type"))
+    #
+    # ──────────────────────────────────────────────────────────────────────
+
+    # Placeholder: just return current state
+    already_has_feedback = sum(1 for w in windows if w.get("feedback"))
+
+    # Update result with any new feedback
+    results_col.update_one(
+        {"_id": result["_id"]},
+        {"$set": {"windows": windows}},
+    )
 
     return {
-        "session": to_jsonable(session),
-        "analysis": analysis,
-        "ai_feedback": (res.get("ai_feedback") if res else []),
-        "instructor_notes": session.get("instructor_notes", ""),
-        "windows": (res.get("windows") if res else []),
+        "status": "ok",
+        "session_id": session_id,
+        "total_windows": len(windows),
+        "windows_with_feedback": already_has_feedback,
+        "message": "Feedback generation placeholder — replace with LLM integration",
     }
-
 
 @app.post("/sessions/{booking_id}/start")
 def start_session(booking_id: str, body: SessionStartRequest, current_user=Depends(require_role("instructor"))):
