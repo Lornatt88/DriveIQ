@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import numpy as np
 from sklearn.impute import KNNImputer
+import tensorflow
 
 
 # =====================================================
@@ -256,7 +257,6 @@ def scale_windows(windows, scaler_path):
     scaled = scaled.reshape(original_shape)
 
     return scaled
-
 
 from tensorflow.keras.models import load_model
 
