@@ -11,7 +11,7 @@ import { colors, type_, radius, space, shadow, card, btn, pill, page, divider, t
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ReportStatus = "Passed" | "Needs Improvement";
-type RecentReport = { id: string; date: string; instructor: string; score: number; status: ReportStatus };
+type RecentReport = { id: string; session_id: string; date: string; instructor: string; score: number; status: ReportStatus };
 type FeedbackArea  = { id: string; title: string; score: number; hint: string; icon: string };
 type CommentItem   = { id: string; date: string; text: string; rating: number };
 type Achievement   = { id: string; title: string; subtitle: string; icon: string; earned: boolean };
@@ -87,7 +87,7 @@ export default function Dashboard() {
       const status: ReportStatus = score >= 70 ? "Passed" : "Needs Improvement";
       const date     = r?.date_label || r?.date || (r?.created_at ? new Date(r.created_at).toLocaleDateString() : "—");
       const instructor = r?.instructor_name || r?.instructor || instructorName || "—";
-      return { id: r?.id || r?._id || r?.trip_id || `rep-${idx}`, date, instructor, score, status };
+      return { id: r?.id || r?._id || r?.trip_id || `rep-${idx}`, session_id: r?.session_id || "", date, instructor, score, status };
     });
   }, [dash, instructorName]);
 
@@ -258,7 +258,10 @@ export default function Dashboard() {
                       Score: <Text style={[s.reportScoreValue, { color: r.score >= 70 ? colors.green : colors.redDark }]}>{r.score}%</Text>
                     </Text>
                     <Pressable
-                      onPress={() => router.push("/(studenttabs)/reports")}
+                      onPress={() => router.push({
+                        pathname: "/(studenttabs)/session-report",
+                        params: { sessionId: r.session_id },
+                      })}
                       style={({ pressed }) => [s.outlineBtn, { marginTop: 0, paddingHorizontal: 12, paddingVertical: 8 }, pressed && { opacity: 0.8 }]}
                     >
                       <Text style={s.outlineBtnText}>View Report →</Text>

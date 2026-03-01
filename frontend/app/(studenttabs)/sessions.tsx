@@ -170,7 +170,6 @@ export default function SessionsScreen() {
   // AI feedback & comments from dashboard
   const aiFeedback          = dashData?.ai_feedback ?? [];
   const instructorComments  = dashData?.instructor_comments ?? [];
-  const achievements        = dashData?.achievements ?? [];
 
   // ── Booking Flow ───────────────────────────────────────────────────
 
@@ -229,10 +228,7 @@ export default function SessionsScreen() {
       {/* ═══ 1. WELCOME BANNER ═══════════════════════════════════════ */}
       <View style={s.hero}>
         <View style={{ flex: 1 }}>
-          <Text style={s.heroTitle}>
-            {studentName ? `Hello, ${studentName}! 👋` : "Welcome back! 👋"}
-          </Text>
-          <Text style={s.heroSub}>Ready to book your next driving session?</Text>
+          <Text style={s.heroTitle}>Ready to book your next driving session?</Text>
         </View>
         <View style={s.heroStats}>
           <View style={s.heroStat}>
@@ -396,27 +392,6 @@ export default function SessionsScreen() {
         </>
       )}
 
-      {/* ═══ 6. ACHIEVEMENTS ═════════════════════════════════════════ */}
-      {achievements.length > 0 && (
-        <>
-          <SectionHeader icon="🏆" title="Your Achievements" />
-          <View style={s.achGrid}>
-            {achievements.map((a: any, i: number) => (
-              <View key={a.id || i} style={[s.achCard, a.earned ? s.achEarned : s.achLocked]}>
-                <Text style={s.achIcon}>{a.icon || "🏅"}</Text>
-                <Text style={s.achTitle}>{a.title}</Text>
-                <Text style={s.achSub}>{a.subtitle || ""}</Text>
-                <View style={[s.achPill, a.earned ? s.achPillOn : s.achPillOff]}>
-                  <Text style={[s.achPillText, a.earned ? { color: "#FFF" } : { color: colors.subtextAlt }]}>
-                    {a.earned ? "✓ Earned" : "🔒 Locked"}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
-
       {/* ═══ MOTIVATION BANNER ═══════════════════════════════════════ */}
       <View style={s.motivationBanner}>
         <Text style={{ fontSize: 28 }}>🎉</Text>
@@ -454,7 +429,7 @@ export default function SessionsScreen() {
                     </View>
                   </View>
 
-                  {/* Available slots */}
+                  {/* Available slots — day columns with time rows */}
                   <Text style={s.modalSectionTitle}>Available Time Slots</Text>
 
                   {slotsLoading ? (
@@ -462,18 +437,43 @@ export default function SessionsScreen() {
                   ) : slots.length === 0 ? (
                     <Text style={s.modalEmpty}>No available slots in the next 2 weeks</Text>
                   ) : (
-                    <View style={s.slotsGrid}>
-                      {slots.map(slot => {
-                        const selected = selectedSlot?.slot_id === slot.slot_id;
+                    <View style={s.scheduleGrid}>
+                      {(() => {
+                        // Group slots by date
+                        const byDate: Record<string, Slot[]> = {};
+                        slots.forEach(slot => {
+                          const key = fmtDate(slot.start_time);
+                          if (!byDate[key]) byDate[key] = [];
+                          byDate[key].push(slot);
+                        });
+                        const dateKeys = Object.keys(byDate);
+
                         return (
-                          <Pressable key={slot.slot_id}
-                            style={[s.slotChip, selected && s.slotChipSelected]}
-                            onPress={() => setSelectedSlot(slot)}>
-                            <Text style={[s.slotDate, selected && { color: "#FFF" }]}>{fmtDate(slot.start_time)}</Text>
-                            <Text style={[s.slotTime, selected && { color: "#FFF" }]}>{fmtTime(slot.start_time)}</Text>
-                          </Pressable>
+                          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <View style={s.scheduleColumns}>
+                              {dateKeys.map(dateKey => (
+                                <View key={dateKey} style={s.scheduleCol}>
+                                  <Text style={s.scheduleColHeader}>{dateKey}</Text>
+                                  {byDate[dateKey].map(slot => {
+                                    const selected = selectedSlot?.slot_id === slot.slot_id;
+                                    return (
+                                      <Pressable
+                                        key={slot.slot_id}
+                                        style={[s.scheduleSlot, selected && s.scheduleSlotSelected]}
+                                        onPress={() => setSelectedSlot(slot)}
+                                      >
+                                        <Text style={[s.scheduleSlotText, selected && { color: "#FFF" }]}>
+                                          {fmtTime(slot.start_time)}
+                                        </Text>
+                                      </Pressable>
+                                    );
+                                  })}
+                                </View>
+                              ))}
+                            </View>
+                          </ScrollView>
                         );
-                      })}
+                      })()}
                     </View>
                   )}
 
@@ -629,19 +629,6 @@ const s = StyleSheet.create({
   feedbackMsg:   { fontSize: 12, fontWeight: "700", lineHeight: 18 },
   feedbackRating:{ marginTop: 4, fontSize: 12 },
 
-  // Achievements
-  achGrid:     { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  achCard:     { borderRadius: radius.card, borderWidth: 2, padding: 14, alignItems: "center", width: "47%" as any },
-  achEarned:   { backgroundColor: "#FFFBEB", borderColor: "#FDE68A" },
-  achLocked:   { backgroundColor: colors.pageBg, borderColor: colors.border },
-  achIcon:     { fontSize: 28, marginBottom: 6 },
-  achTitle:    { fontWeight: "900", fontSize: 12, color: colors.textAlt, textAlign: "center" },
-  achSub:      { fontSize: 11, fontWeight: "700", color: colors.subtext, textAlign: "center", marginTop: 4 },
-  achPill:     { marginTop: 8, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
-  achPillOn:   { backgroundColor: colors.purpleDark },
-  achPillOff:  { backgroundColor: colors.borderMid },
-  achPillText: { fontWeight: "900", fontSize: 10 },
-
   // Motivation
   motivationBanner: { marginTop: 8, borderRadius: radius.card, borderWidth: 2, borderColor: "#BBF7D0", backgroundColor: "#F0FDF4", padding: space.lg, alignItems: "center", gap: 6 },
   motivationTitle:  { fontWeight: "900", fontSize: 14, color: "#166534", textAlign: "center" },
@@ -665,12 +652,14 @@ const s = StyleSheet.create({
   modalSectionTitle: { fontWeight: "900", fontSize: 14, color: colors.textAlt, marginBottom: 10 },
   modalEmpty:        { textAlign: "center", color: colors.subtext, fontWeight: "700", fontSize: 12, marginVertical: 20 },
 
-  // Slots
-  slotsGrid:       { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
-  slotChip:        { borderWidth: 1, borderColor: colors.border, borderRadius: radius.input, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.pageBg, alignItems: "center" },
-  slotChipSelected:{ backgroundColor: colors.purpleDark, borderColor: colors.purpleDark },
-  slotDate:        { fontWeight: "900", fontSize: 11, color: colors.textAlt },
-  slotTime:        { fontWeight: "700", fontSize: 11, color: colors.subtext, marginTop: 2 },
+  // Schedule grid (day columns with time rows)
+  scheduleGrid:        { marginBottom: 16 },
+  scheduleColumns:     { flexDirection: "row", gap: 10 },
+  scheduleCol:         { alignItems: "center", minWidth: 80 },
+  scheduleColHeader:   { fontWeight: "900", fontSize: 11, color: colors.textAlt, marginBottom: 8, textAlign: "center" },
+  scheduleSlot:        { borderWidth: 1, borderColor: colors.border, borderRadius: radius.input, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: colors.pageBg, marginBottom: 6, width: "100%" as any, alignItems: "center" },
+  scheduleSlotSelected:{ backgroundColor: colors.purpleDark, borderColor: colors.purpleDark },
+  scheduleSlotText:    { fontWeight: "700", fontSize: 12, color: colors.label },
 
   // Booking summary
   bookingSummary:     { backgroundColor: "#EFF6FF", borderWidth: 1, borderColor: "#BFDBFE", borderRadius: radius.card, padding: 14, marginBottom: 16 },

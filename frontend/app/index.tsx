@@ -17,10 +17,7 @@ import { API_BASE_URL } from "../lib/config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
-type Role = "trainee" | "instructor";
-
 export default function LoginScreen() {
-  const [roleUI, setRoleUI] = useState<"student" | "instructor">("instructor");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -28,24 +25,6 @@ export default function LoginScreen() {
   const canLogin = useMemo(() => {
     return identifier.trim().length > 0 && password.trim().length > 0;
   }, [identifier, password]);
-
-  const loginLabel =
-    roleUI === "instructor" ? "Log In as Instructor" : "Log In as Student";
-
-  const testBackend = async () => {
-    try {
-      const res = await apiGet("/health", { auth: false });
-      Alert.alert(
-        "Backend test ✅",
-        `API_BASE_URL:\n${API_BASE_URL}\n\nResponse:\n${JSON.stringify(res)}`
-      );
-    } catch (e: any) {
-      Alert.alert(
-        "Backend test failed ❌",
-        `API_BASE_URL:\n${API_BASE_URL}\n\nError:\n${e?.message || "Unknown"}`
-      );
-    }
-  };
 
   const onLogin = async () => {
     if (!canLogin) return;
@@ -61,7 +40,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem("driveiq_user_name", res.user.name);
       }
 
-      const backendRole: Role = res.user?.role;
+      const backendRole = res.user?.role;
 
       if (backendRole === "instructor") {
         router.replace("/(tabs)/dashboard");
@@ -86,43 +65,6 @@ export default function LoginScreen() {
         <Text style={styles.h2}>Log in to access your dashboard</Text>
 
         <View style={styles.card}>
-          <Text style={styles.roleLabel}>Choose Role</Text>
-          <View style={styles.rolePills}>
-            <Pressable
-              onPress={() => setRoleUI("student")}
-              style={[
-                styles.rolePill,
-                roleUI === "student" && styles.rolePillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.rolePillText,
-                  roleUI === "student" && styles.rolePillTextActive,
-                ]}
-              >
-                Student
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setRoleUI("instructor")}
-              style={[
-                styles.rolePill,
-                roleUI === "instructor" && styles.rolePillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.rolePillText,
-                  roleUI === "instructor" && styles.rolePillTextActive,
-                ]}
-              >
-                Instructor
-              </Text>
-            </Pressable>
-          </View>
-
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputWrap}>
             <Text style={styles.inputIcon}>✉️</Text>
@@ -167,7 +109,7 @@ export default function LoginScreen() {
             onPress={onLogin}
             style={[styles.loginBtn, !canLogin && styles.loginBtnDisabled]}
           >
-            <Text style={styles.loginBtnText}>{loginLabel}</Text>
+            <Text style={styles.loginBtnText}>Log In</Text>
           </Pressable>
 
           {/* ✅ REGISTER BUTTON — THIS WAS MISSING */}
@@ -180,9 +122,6 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
 
-          <Pressable onPress={testBackend} style={styles.testBtn}>
-            <Text style={styles.testBtnText}>Test Backend Connection</Text>
-          </Pressable>
         </View>
 
         <Text style={styles.footer}>©️ 2025 DriveIQ. All rights reserved.</Text>
@@ -221,25 +160,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#EAECF0",
   },
-
-  roleLabel: {
-    color: "#344054",
-    fontSize: 12,
-    fontWeight: "800",
-    marginBottom: 8,
-  },
-  rolePills: { flexDirection: "row", gap: 10, marginBottom: 12 },
-  rolePill: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  rolePillActive: { backgroundColor: "#0B1220", borderColor: "#0B1220" },
-  rolePillText: { fontWeight: "900", fontSize: 12 },
-  rolePillTextActive: { color: "#fff" },
 
   label: {
     color: "#344054",
@@ -293,9 +213,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 12,
   },
-
-  testBtn: { marginTop: 10, alignItems: "center" },
-  testBtnText: { color: "#2563EB", fontWeight: "800", fontSize: 12 },
 
   footer: { marginTop: 16, color: "#98A2B3", fontSize: 11 },
 });
