@@ -9,9 +9,10 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Modal,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { apiGet, apiPost } from "../../lib/api";
+import { apiGet, apiPost, apiPatch } from "../../lib/api";
 
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
@@ -130,15 +131,11 @@ function friendlyError(e: any): string {
 }
 
 export default function SessionsScreen() {
-  // ---------------------------
-  // mounted guard (prevents Expo Router "inst of null" crash)
-  // ---------------------------
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      // Reset in-flight guards so the next mount triggers a fresh load
       loadSessionsInFlight.current = false;
       loadLearnersInFlight.current = false;
       openReportInFlight.current = false;
@@ -172,11 +169,22 @@ export default function SessionsScreen() {
 
   // analysis panel
   const [selectedReport, setSelectedReport] = useState<ReportResponse | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
 
   // ending / generating state
   const [endingId, setEndingId] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+
+  // post-end modal (notes + generate report)
+  const [postEndModal, setPostEndModal] = useState<{ sessionId: string; traineeName: string } | null>(null);
+  const [instructorNotes, setInstructorNotes] = useState("");
+  const [generating, setGenerating] = useState(false);
+
+  // edit notes in analysis panel
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [editNotesDraft, setEditNotesDraft] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
 
   // debug / UX
   const [lastAction, setLastAction] = useState<string>("");
@@ -194,7 +202,6 @@ export default function SessionsScreen() {
 
   const activeSession = useMemo(() => sessions.find((s) => s.status === "active") || null, [sessions]);
 
-  // timer tick (only if there is an active session)
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (!activeSession) return;
@@ -224,7 +231,6 @@ export default function SessionsScreen() {
       const arr: Learner[] = Array.isArray(data) ? data : [];
       setLearners(arr);
 
-      // keep selected trainee stable
       if (!selectedLearnerId && arr.length > 0) setSelectedLearnerId(arr[0].user_id);
 
       setLastAction("Trainees loaded ✅");
@@ -268,7 +274,6 @@ export default function SessionsScreen() {
     }
   };
 
-  // Load on screen focus ONLY (removes double fetch + reduces crashes)
   useFocusEffect(
     useCallback(() => {
       loadLearners();
@@ -307,10 +312,23 @@ export default function SessionsScreen() {
     }
   };
 
-  const startSession = async (sessionId: string) => {
+  // Show a road type picker before starting
+  const promptRoadType = (id: string) => {
+    Alert.alert(
+      "Select Road Type",
+      "What type of road is this session on?",
+      [
+        { text: "Secondary", onPress: () => startSession(id, "Secondary") },
+        { text: "Motorway", onPress: () => startSession(id, "Motorway") },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
+
+  const startSession = async (id: string, roadType: string) => {
     try {
-      setLastAction(`Starting ${sessionId}…`);
-      await apiPost(`/sessions/${sessionId}/start`, {});
+      setLastAction(`Starting ${id}…`);
+      await apiPost(`/sessions/${id}/start`, { road_type: roadType });
       if (!isMountedRef.current) return;
       setLastAction("Session started ✅");
       await loadSessions();
@@ -331,9 +349,9 @@ export default function SessionsScreen() {
 
       setLastAction(`Opening analysis for ${sessionId}…`);
       setReportLoading(true);
-
-      // Force a visible update even if same session tapped twice
       setSelectedReport(null);
+      setSelectedSessionId(sessionId);
+      setEditingNotes(false);
 
       const rep = await apiGet(`/sessions/${sessionId}/report`);
       if (!isMountedRef.current) return;
@@ -362,7 +380,12 @@ export default function SessionsScreen() {
   const endSession = async (sessionId: string) => {
     if (endingId) return;
 
-    Alert.alert("End session?", "This will finalize the session and generate a report.", [
+    // Capture trainee name before async ops
+    const s = sessions.find((x) => x.session_id === sessionId);
+    const learner = learnerMap.get(s?.trainee_id || "");
+    const traineeName = learner ? labelLearner(learner) : (s?.trainee_name || "Unknown");
+
+    Alert.alert("End session?", "This will finalize the session.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "End",
@@ -377,11 +400,14 @@ export default function SessionsScreen() {
             await apiPost(`/sessions/${sessionId}/end`, {});
             if (!isMountedRef.current) return;
 
-            setLastAction("Session ended ✅ (loading report)");
-            setTab("past"); // show completed session right away
+            setLastAction("Session ended ✅");
+            setTab("past");
 
             await loadSessions();
-            await openReport(sessionId);
+
+            // Show post-end modal for notes + report generation
+            setInstructorNotes("");
+            setPostEndModal({ sessionId, traineeName });
           } catch (e2: any) {
             if (!isMountedRef.current) return;
             const msg = friendlyError(e2);
@@ -396,44 +422,69 @@ export default function SessionsScreen() {
     ]);
   };
 
-  const generateReport = (sessionId: string) => {
-    Alert.alert(
-      "Generate ML Report",
-      "This runs the full ML pipeline (~10–30 seconds). Continue?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Generate",
-          onPress: async () => {
-            try {
-              if (!isMountedRef.current) return;
-              setGeneratingId(sessionId);
-              setLastAction(`Generating report for ${sessionId}…`);
-              await apiPost(`/sessions/${sessionId}/generate-feedback`, {});
-              if (!isMountedRef.current) return;
-              setLastAction("Report generated ✅ (loading analysis)");
-              await loadSessions();
-              await openReport(sessionId);
-            } catch (e: any) {
-              if (!isMountedRef.current) return;
-              const msg = friendlyError(e);
-              setLastAction(`Generate failed ❌ ${msg}`);
-              Alert.alert("Generate Report", msg);
-            } finally {
-              if (!isMountedRef.current) return;
-              setGeneratingId(null);
-            }
-          },
-        },
-      ]
-    );
+  // Open generate modal from the sessions list (for already-completed sessions)
+  const openGenerateModal = (sessionId: string) => {
+    const s = sessions.find((x) => x.session_id === sessionId);
+    const learner = learnerMap.get(s?.trainee_id || "");
+    const traineeName = learner ? labelLearner(learner) : (s?.trainee_name || "Unknown");
+    // Pre-fill with existing notes if report is already open for this session
+    const existing = selectedSessionId === sessionId ? (selectedReport?.instructor_notes || "") : "";
+    setInstructorNotes(existing);
+    setPostEndModal({ sessionId, traineeName });
+  };
+
+  // Called from the modal's Generate button
+  const generateReport = async () => {
+    if (!postEndModal) return;
+    const { sessionId } = postEndModal;
+
+    try {
+      setGenerating(true);
+      setGeneratingId(sessionId);
+      setLastAction(`Generating report for ${sessionId}…`);
+
+      await apiPost(`/sessions/${sessionId}/generate-feedback`, { instructor_notes: instructorNotes });
+      if (!isMountedRef.current) return;
+
+      setLastAction("Report generated ✅");
+      setPostEndModal(null);
+      setInstructorNotes("");
+
+      await loadSessions();
+      await openReport(sessionId);
+    } catch (e: any) {
+      if (!isMountedRef.current) return;
+      const msg = friendlyError(e);
+      setLastAction(`Generate failed ❌ ${msg}`);
+      Alert.alert("Generate Report", msg);
+    } finally {
+      if (!isMountedRef.current) return;
+      setGenerating(false);
+      setGeneratingId(null);
+    }
+  };
+
+  // Save notes without re-running ML
+  const saveNotes = async () => {
+    if (!selectedSessionId) return;
+    try {
+      setSavingNotes(true);
+      await apiPatch(`/sessions/${selectedSessionId}/notes`, { instructor_notes: editNotesDraft });
+      if (!isMountedRef.current) return;
+      setSelectedReport((prev) => prev ? { ...prev, instructor_notes: editNotesDraft } : prev);
+      setEditingNotes(false);
+    } catch (e: any) {
+      Alert.alert("Save Notes", friendlyError(e));
+    } finally {
+      if (!isMountedRef.current) return;
+      setSavingNotes(false);
+    }
   };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
     const list = sessions.filter((s) => {
-      // upcoming = not completed, past = completed
       const keep = tab === "upcoming" ? s.status !== "completed" : s.status === "completed";
       if (!keep) return false;
 
@@ -490,7 +541,7 @@ export default function SessionsScreen() {
             </View>
 
             <Text style={styles.timer}>⏱ {msToClock(activeElapsed)}</Text>
-            <Text style={styles.mutedSmall}>Timer starts only after you press “Start”.</Text>
+            <Text style={styles.mutedSmall}>Timer starts only after you press "Start".</Text>
 
             <Pressable
               disabled={!!endingId || !activeSession.session_id}
@@ -696,8 +747,8 @@ export default function SessionsScreen() {
                   <Pressable
                     disabled={!canStart}
                     onPress={() => {
-                      if (isConfirmed && s.booking_id) startSession(s.booking_id);
-                      else if (s.session_id) startSession(s.session_id);
+                      if (isConfirmed && s.booking_id) promptRoadType(s.booking_id);
+                      else if (s.session_id) promptRoadType(s.session_id);
                     }}
                     style={({ pressed }) => [
                       styles.actionBtn,
@@ -741,7 +792,7 @@ export default function SessionsScreen() {
                   {s.status === "completed" && s.session_id && (
                     <Pressable
                       disabled={!!generatingId || !!endingId}
-                      onPress={() => generateReport(s.session_id!)}
+                      onPress={() => openGenerateModal(s.session_id!)}
                       style={({ pressed }) => [
                         styles.actionBtnGenerate,
                         (!!generatingId || !!endingId) ? styles.actionBtnDisabled : null,
@@ -772,7 +823,7 @@ export default function SessionsScreen() {
             <Text style={styles.muted}>Loading analysis…</Text>
           </View>
         ) : !selectedReport ? (
-          <Text style={styles.muted}>Open any session → “View analysis”</Text>
+          <Text style={styles.muted}>Open any session → "View analysis"</Text>
         ) : (
           <View style={{ marginTop: 10 }}>
             <View style={styles.scoreRow}>
@@ -810,9 +861,113 @@ export default function SessionsScreen() {
                 ))}
               </View>
             ) : null}
+
+            {/* Instructor Notes */}
+            <View style={styles.notesSection}>
+              <View style={styles.notesSectionHeader}>
+                <Text style={styles.notesSectionTitle}>📝 Instructor Notes</Text>
+                {!editingNotes && (
+                  <Pressable
+                    onPress={() => {
+                      setEditNotesDraft(selectedReport.instructor_notes || "");
+                      setEditingNotes(true);
+                    }}
+                  >
+                    <Text style={styles.editLink}>Edit</Text>
+                  </Pressable>
+                )}
+              </View>
+
+              {editingNotes ? (
+                <>
+                  <TextInput
+                    value={editNotesDraft}
+                    onChangeText={setEditNotesDraft}
+                    multiline
+                    numberOfLines={4}
+                    placeholder="Add your notes and suggestions…"
+                    placeholderTextColor="#98A2B3"
+                    style={styles.notesInput}
+                  />
+                  <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+                    <Pressable
+                      onPress={() => setEditingNotes(false)}
+                      style={styles.cancelNoteBtn}
+                    >
+                      <Text style={styles.cancelNoteBtnText}>Cancel</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={saveNotes}
+                      disabled={savingNotes}
+                      style={[styles.saveNoteBtn, savingNotes && { opacity: 0.6 }]}
+                    >
+                      <Text style={styles.saveNoteBtnText}>{savingNotes ? "Saving…" : "Save"}</Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <Text style={styles.notesText}>
+                  {selectedReport.instructor_notes?.trim() || "No notes added yet."}
+                </Text>
+              )}
+            </View>
           </View>
         )}
       </View>
+
+      {/* Post-end / Generate Report Modal */}
+      <Modal
+        visible={!!postEndModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { if (!generating) setPostEndModal(null); }}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => { if (!generating) setPostEndModal(null); }}
+        >
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>Session Ended</Text>
+            <Text style={styles.modalSub}>with {postEndModal?.traineeName}</Text>
+
+            <Text style={styles.modalLabel}>Instructor Notes</Text>
+            <Text style={styles.modalHint}>Optional — your feedback will appear on the student's report.</Text>
+            <TextInput
+              value={instructorNotes}
+              onChangeText={setInstructorNotes}
+              multiline
+              numberOfLines={5}
+              placeholder="Add your feedback and suggestions for the student…"
+              placeholderTextColor="#98A2B3"
+              style={styles.modalTextInput}
+            />
+
+            <View style={styles.modalActions}>
+              <Pressable
+                disabled={generating}
+                onPress={() => { if (!generating) setPostEndModal(null); }}
+                style={[styles.modalSkipBtn, generating && { opacity: 0.4 }]}
+              >
+                <Text style={styles.modalSkipText}>Skip for now</Text>
+              </Pressable>
+              <Pressable
+                disabled={generating}
+                onPress={generateReport}
+                style={[styles.modalGenerateBtn, generating && { opacity: 0.6 }]}
+              >
+                {generating ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text style={styles.modalGenerateBtnText}>Generating…</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.modalGenerateBtnText}>Generate Report →</Text>
+                )}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -1025,10 +1180,106 @@ const styles = StyleSheet.create({
   feedbackItemTitle: { color: "#101828", fontWeight: "900" },
   feedbackItemText: { marginTop: 6, color: "#667085", fontWeight: "800" },
 
+  // Instructor notes in analysis panel
+  notesSection: { marginTop: 14, backgroundColor: "#F9FAFB", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 14, padding: 12 },
+  notesSectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
+  notesSectionTitle: { color: "#101828", fontWeight: "900", fontSize: 13 },
+  editLink: { color: "#7C3AED", fontWeight: "900", fontSize: 12 },
+  notesText: { color: "#667085", fontWeight: "700", fontSize: 13, lineHeight: 20 },
+  notesInput: {
+    minHeight: 80,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontWeight: "700",
+    color: "#101828",
+    fontSize: 13,
+    textAlignVertical: "top",
+  },
+  cancelNoteBtn: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  cancelNoteBtnText: { color: "#667085", fontWeight: "900", fontSize: 12 },
+  saveNoteBtn: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    backgroundColor: "#7C3AED",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  saveNoteBtnText: { color: "#fff", fontWeight: "900", fontSize: 12 },
+
   center: { alignItems: "center", justifyContent: "center", padding: 16 },
   centerText: { marginTop: 10, fontWeight: "800", color: "#64748B" },
 
   empty: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 16, padding: 16, alignItems: "center" },
   emptyTitle: { color: "#101828", fontWeight: "900", fontSize: 13 },
   emptySub: { marginTop: 6, color: "#667085", fontWeight: "800", fontSize: 12, textAlign: "center" },
+
+  // Post-end modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 480,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    gap: 6,
+  },
+  modalTitle: { fontSize: 18, fontWeight: "900", color: "#101828" },
+  modalSub: { fontSize: 13, fontWeight: "700", color: "#667085", marginBottom: 10 },
+  modalLabel: { fontSize: 13, fontWeight: "900", color: "#101828", marginTop: 8 },
+  modalHint: { fontSize: 11, fontWeight: "700", color: "#98A2B3", marginBottom: 6 },
+  modalTextInput: {
+    minHeight: 110,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    backgroundColor: "#F9FAFB",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontWeight: "700",
+    color: "#101828",
+    fontSize: 13,
+    textAlignVertical: "top",
+    marginTop: 4,
+  },
+  modalActions: { flexDirection: "row", gap: 10, marginTop: 16 },
+  modalSkipBtn: {
+    flex: 1,
+    minHeight: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  modalSkipText: { color: "#667085", fontWeight: "900", fontSize: 13 },
+  modalGenerateBtn: {
+    flex: 2,
+    minHeight: 50,
+    borderRadius: 14,
+    backgroundColor: "#7C3AED",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalGenerateBtnText: { color: "#fff", fontWeight: "900", fontSize: 13 },
 });

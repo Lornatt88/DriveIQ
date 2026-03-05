@@ -71,6 +71,8 @@ type SessionReport = {
   summary_feedback?: string;
   date?: string;
   instructor?: string;
+  instructor_notes?: string;
+  report_ready?: boolean;
 };
 
 type FilterMode = "all" | "abnormal" | "aggressive" | "drowsy" | "normal";
@@ -436,22 +438,35 @@ export default function SessionReportScreen() {
   const [selectedWindow, setSelectedWindow] = useState<number | null>(null);
   const [filter, setFilter] = useState<FilterMode>("all");
 
+  // polling ref — cleared when report becomes ready
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
   // ── Fetch report data ──────────────────────────────────────────────────
 
   useEffect(() => {
     loadReport();
   }, [sessionId]);
 
-  async function loadReport() {
+  async function loadReport(silent = false) {
     try {
-      setLoading(true);
-      setError(null);
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
 
       // Fetch both timeline and report endpoints
       const [timelineData, reportData] = await Promise.all([
         apiGet(`/sessions/${sessionId}/timeline`),
         apiGet(`/sessions/${sessionId}/report`),
       ]);
+
+      const reportReady: boolean = reportData.report_ready ?? false;
 
       // Merge into a single report object
       const merged: SessionReport = {
@@ -468,6 +483,8 @@ export default function SessionReportScreen() {
         windows: timelineData.windows ?? [],
         date: reportData.session_summary?.date,
         instructor: reportData.session_summary?.instructor,
+        instructor_notes: reportData.instructor_notes ?? "",
+        report_ready: reportReady,
       };
 
       // Calculate window_summary from windows if not provided
@@ -485,16 +502,26 @@ export default function SessionReportScreen() {
       setReport(merged);
 
       // Auto-select first abnormal window if any
-      const firstAbnormal = merged.windows.find(
-        (w) => w.predicted_label !== "Normal"
-      );
-      if (firstAbnormal) {
-        setSelectedWindow(firstAbnormal.window_id);
+      if (reportReady) {
+        const firstAbnormal = merged.windows.find((w) => w.predicted_label !== "Normal");
+        if (firstAbnormal) setSelectedWindow(firstAbnormal.window_id);
+      }
+
+      // Start/stop polling based on report_ready
+      if (!reportReady) {
+        if (!pollRef.current) {
+          pollRef.current = setInterval(() => loadReport(true), 12000);
+        }
+      } else {
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
       }
     } catch (err: any) {
-      setError(err?.message ?? "Failed to load report");
+      if (!silent) setError(err?.message ?? "Failed to load report");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -569,11 +596,34 @@ export default function SessionReportScreen() {
           {error ?? "Report not found"}
         </Text>
         <Pressable
-          onPress={loadReport}
+          onPress={() => loadReport()}
           style={[s.retryBtn]}
         >
           <Text style={s.retryBtnText}>Retry</Text>
         </Pressable>
+      </View>
+    );
+  }
+
+  // ── Report Pending state ───────────────────────────────────────────────
+
+  if (!report.report_ready) {
+    return (
+      <View style={page.base}>
+        <ScrollView contentContainerStyle={[page.content, { paddingTop: 16 }]}>
+          <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={12}>
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
+            <Text style={s.backBtnText}>Back</Text>
+          </Pressable>
+          <View style={[s.pendingCard]}>
+            <Text style={s.pendingIcon}>⏳</Text>
+            <Text style={s.pendingTitle}>Report Pending</Text>
+            <Text style={s.pendingText}>
+              Your instructor is reviewing this session. The full report will appear here automatically once generated.
+            </Text>
+            <ActivityIndicator size="small" color={colors.purpleDark} style={{ marginTop: 16 }} />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -768,6 +818,21 @@ export default function SessionReportScreen() {
               <Ionicons name="sparkles" size={18} color={colors.purpleDark} />
               <Text style={s.summaryText}>{report.summary_feedback}</Text>
             </View>
+          </View>
+        )}
+
+        {/* ── 5. Instructor Notes ──────────────────────────────────────── */}
+        {!!report.instructor_notes?.trim() && (
+          <View style={[card.base, s.instructorNotesCard]}>
+            <SectionHeader
+              icon="📝"
+              iconBg="#FFF7ED"
+              label="Instructor Notes"
+            />
+            <Text style={s.instructorNotesText}>"{report.instructor_notes.trim()}"</Text>
+            {report.instructor && (
+              <Text style={s.instructorName}>— {report.instructor}</Text>
+            )}
           </View>
         )}
 
@@ -1164,5 +1229,49 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+
+  // ── Pending state
+  pendingCard: {
+    backgroundColor: colors.cardBg,
+    borderRadius: radius.card ?? 16,
+    padding: 32,
+    alignItems: "center",
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: colors.borderFaint ?? colors.border,
+    gap: 10,
+  },
+  pendingIcon: { fontSize: 40 },
+  pendingTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: colors.text,
+    marginTop: 4,
+  },
+  pendingText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: colors.subtext,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+
+  // ── Instructor notes
+  instructorNotesCard: {
+    gap: 10,
+  },
+  instructorNotesText: {
+    fontSize: 13.5,
+    fontWeight: "500",
+    color: colors.text,
+    lineHeight: 21,
+    fontStyle: "italic",
+  },
+  instructorName: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.subtext,
+    marginTop: 4,
   },
 });

@@ -19,7 +19,7 @@ from app.database import (
 )
 from app.datasets import pick_csv_for_simulation, resolve_datasets_root
 from app.ml.predictor import predict_from_dataframe
-from app.models import SessionEndRequest, SessionNoteUpdate, SessionStartRequest
+from app.models import GenerateFeedbackRequest, SessionEndRequest, SessionNoteUpdate, SessionStartRequest
 from app.permissions import get_current_user, require_role
 from app.utils import now_utc, to_jsonable
 
@@ -54,6 +54,8 @@ def my_reports(current_user=Depends(require_role("trainee"))):
         r["session_id"]: r
         for r in results_col.find({"session_id": {"$in": session_ids}})
     }
+    # report_ready per session: True whenever any result exists (False only for sessions with no analysis yet)
+    report_ready_map = {sid: True for sid in results}
 
     out = []
     for s in sessions:
@@ -101,6 +103,7 @@ def my_reports(current_user=Depends(require_role("trainee"))):
             "duration_minutes": s.get("duration_min", 0),
             "window_summary": ws,
             "instructor_name": s.get("instructor_name", "—"),
+            "report_ready": report_ready_map.get(s["session_id"], False) or bool(s.get("performance_score")) or s.get("status") == "completed",
         })
 
     return {"sessions": to_jsonable(out)}
@@ -228,6 +231,9 @@ def session_report(session_id: str, current_user=Depends(get_current_user)):
         sort=[("created_at", -1)]
     )
 
+    # report_ready: True if result exists, has inline perf data, or session is already completed (seeded sessions)
+    report_ready = bool(result) or bool(session.get("performance_score")) or session.get("status") == "completed"
+
     score = 0
     if result:
         score = result.get("performance_score") or result.get("analysis", {}).get("overall", 0)
@@ -268,6 +274,7 @@ def session_report(session_id: str, current_user=Depends(get_current_user)):
         ai_feedback = result.get("ai_feedback") or []
 
     return to_jsonable({
+        "report_ready": report_ready,
         "session_summary": {
             "date": date_str,
             "time": time_str,
@@ -293,20 +300,13 @@ def session_report(session_id: str, current_user=Depends(get_current_user)):
 # ── Generate ML report ────────────────────────────────────────────────────────
 
 @router.post("/sessions/{session_id}/generate-feedback")
-def generate_session_feedback(session_id: str, current_user=Depends(require_role("instructor"))):
+def generate_session_feedback(session_id: str, body: GenerateFeedbackRequest, current_user=Depends(require_role("instructor"))):
     """Run the KNN ML pipeline on a completed session and store results."""
     session = sessions_col.find_one({"session_id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     if session.get("instructor_id") != current_user.get("instructor_id"):
         raise HTTPException(status_code=403, detail="Forbidden")
-
-    result = results_col.find_one(
-        {"session_id": session_id},
-        sort=[("created_at", -1)]
-    )
-    if not result or not result.get("windows"):
-        raise HTTPException(status_code=400, detail="No window data found for this session")
 
     _ensure_ml_src()
     from knn_alerts_inference import run_full_knn_pipeline  # noqa: PLC0415
@@ -349,6 +349,7 @@ def generate_session_feedback(session_id: str, current_user=Depends(require_role
             "total_windows":      summary.get("total_windows"),
             "total_alerts":       summary.get("total_alerts"),
             "window_summary":     summary.get("window_summary"),
+            "instructor_notes":   body.instructor_notes,
             "processed_at":       now_utc(),
         }},
     )
@@ -384,8 +385,8 @@ def start_session(booking_id: str, body: SessionStartRequest, current_user=Depen
     )
 
     session_id = uuid.uuid4().hex
-    road_type = "secondary"
-    chosen = pick_csv_for_simulation(road_type)
+    road_type = body.road_type.strip().title()  # "Motorway" or "Secondary"
+    chosen = pick_csv_for_simulation(road_type.lower())
     root = resolve_datasets_root()
     used = {
         "csv": chosen.name,

@@ -33,8 +33,6 @@ export default function InstructorTabsLayout() {
       if (name) { setUserName(name); setAvatarLetter(name.charAt(0).toUpperCase()); }
       if (role === "trainee") {
         router.replace("/(studenttabs)/dashboard" as any);
-      } else if (!role) {
-        router.replace("/");
       }
     });
   }, []);

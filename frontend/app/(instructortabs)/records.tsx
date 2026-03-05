@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,526 +9,739 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { router } from "expo-router";
+import { useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { apiGet } from "../../lib/api";
+import { colors, card, page } from "../../lib/theme";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 type Outcome = "Passed" | "Failed";
 type DriverProfile = "Drowsy" | "Aggressive" | "Normal";
 
 type LearnerRecord = {
-  id: string;
-  learnerId: string;     // trainee_id
+  learnerId: string;
   initials: string;
   name: string;
   lastSessionDate: string;
-  vehicle: string;
+  sessionCount: number;
+  roadType: string;
   score: number;
   outcome: Outcome;
   profile: DriverProfile;
 };
 
-function initialsFromName(name?: string) {
-  if (!name) return "—";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const a = parts[0]?.[0] || "";
-  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] || "" : "";
-  const out = (a + b).toUpperCase();
-  return out || "—";
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function initials(name?: string) {
+  if (!name?.trim()) return "?";
+  const parts = name.trim().split(/\s+/);
+  const a = parts[0]?.[0] ?? "";
+  const b = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (a + b).toUpperCase();
 }
 
-function profileFromLabel(label?: string): DriverProfile {
+function profileFrom(label?: string): DriverProfile {
   const x = (label || "").toLowerCase();
   if (x.includes("drowsy")) return "Drowsy";
   if (x.includes("aggressive")) return "Aggressive";
   return "Normal";
 }
 
+function roadTypeFrom(result: any): string {
+  if (result?.road_type) return result.road_type;
+  const csv: string = result?.dataset_used?.csv || "";
+  if (csv.toLowerCase().includes("motorway")) return "Motorway";
+  if (csv.toLowerCase().includes("secondary")) return "Secondary";
+  return "—";
+}
+
+function formatDate(iso?: string) {
+  if (!iso) return "—";
+  const ms = Date.parse(iso);
+  return isFinite(ms)
+    ? new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    : "—";
+}
+
+function scoreColor(s: number) {
+  if (s >= 80) return colors.green;
+  if (s >= 60) return colors.yellow;
+  return colors.red;
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function ProfilePill({ profile }: { profile: DriverProfile }) {
+  const cfg = {
+    Normal:     { bg: colors.greenLight,  text: colors.green,      label: "Normal" },
+    Drowsy:     { bg: colors.redLight,    text: colors.red,         label: "Drowsy" },
+    Aggressive: { bg: "#FEF3C7",          text: "#B45309",          label: "Aggressive" },
+  }[profile];
+  return (
+    <View style={[rs.pill, { backgroundColor: cfg.bg }]}>
+      <Text style={[rs.pillText, { color: cfg.text }]}>{cfg.label}</Text>
+    </View>
+  );
+}
+
+function KpiCard({
+  icon,
+  label,
+  value,
+  sub,
+  iconBg,
+  iconColor,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  sub: string;
+  iconBg: string;
+  iconColor: string;
+}) {
+  return (
+    <View style={[card.base, rs.kpiCard]}>
+      <View style={[rs.kpiIcon, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon as any} size={18} color={iconColor} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={rs.kpiLabel}>{label}</Text>
+        <Text style={rs.kpiValue}>{value}</Text>
+        <Text style={rs.kpiSub}>{sub}</Text>
+      </View>
+    </View>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function RecordsScreen() {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
-  const PAGE_SIZE = isWide ? 8 : 4;
+  const PAGE_SIZE = isWide ? 8 : 5;
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [learners, setLearners] = useState<any[]>([]);
-  const [recordsRaw, setRecordsRaw] = useState<any[]>([]);
+  const [resultsRaw, setResultsRaw] = useState<any[]>([]);
 
   const [search, setSearch] = useState("");
-  const [outcomeFilter, setOutcomeFilter] = useState<"All Outcomes" | Outcome>("All Outcomes");
-  const [vehicleFilter, setVehicleFilter] = useState<"All Vehicles" | string>("All Vehicles");
-  const [page, setPage] = useState(1);
+  const [outcomeFilter, setOutcomeFilter] = useState<"All" | Outcome>("All");
+  const [profileFilter, setProfileFilter] = useState<"All" | DriverProfile>("All");
+  const [pageNum, setPageNum] = useState(1);
 
-  const load = async () => {
+  async function load() {
     try {
+      setError(null);
       setLoading(true);
       const [l, r] = await Promise.all([
         apiGet("/instructor/learners"),
         apiGet("/records/instructor"),
       ]);
       setLearners(Array.isArray(l) ? l : []);
-      setRecordsRaw(Array.isArray(r) ? r : []);
+      setResultsRaw(Array.isArray(r) ? r : []);
     } catch (e: any) {
-      setLearners([]);
-      setRecordsRaw([]);
-      Alert.alert("Records Error", e?.message || "Failed to load records");
+      setError(e?.message ?? "Failed to load records");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
+  useFocusEffect(useCallback(() => { load(); }, []));
 
+  // Map user_id → name
   const nameById = useMemo(() => {
     const m: Record<string, string> = {};
     for (const l of learners) {
-      if (l?.user_id) m[l.user_id] = l?.name || "";
+      if (l?.user_id) m[l.user_id] = l?.name || l?.email || l.user_id;
     }
     return m;
   }, [learners]);
 
-  // Backend returns results_col docs:
-  // { session_id, trainee_id, instructor_id, created_at, dataset_used: { csv }, analysis: { overall, behavior } }
+  // Aggregate results per learner (one row per learner, latest result on top)
   const all: LearnerRecord[] = useMemo(() => {
-    return recordsRaw.map((x: any) => {
-      const traineeId = x?.trainee_id || "";
-      const name = nameById[traineeId] || traineeId || "—";
-      const score = Math.round(typeof x?.analysis?.overall === "number" ? x.analysis.overall : 0);
-      const outcome: Outcome = (score >= 70 ? "Passed" : "Failed") as Outcome;
-      const vehicle = x?.dataset_used?.csv || "—";
-      const last = x?.created_at ? new Date(x.created_at).toLocaleDateString() : "—";
-      const profile = profileFromLabel(x?.analysis?.behavior);
+    const byTrainee = new Map<string, any[]>();
+    for (const r of resultsRaw) {
+      const tid = r?.trainee_id || "_unknown";
+      if (!byTrainee.has(tid)) byTrainee.set(tid, []);
+      byTrainee.get(tid)!.push(r);
+    }
 
+    return Array.from(byTrainee.entries()).map(([traineeId, results]) => {
+      // Sort newest first
+      results.sort((a, b) => {
+        const da = a?.created_at ? Date.parse(a.created_at) : 0;
+        const db = b?.created_at ? Date.parse(b.created_at) : 0;
+        return db - da;
+      });
+      const latest = results[0];
+      const scores = results
+        .map((r) => (typeof r?.analysis?.overall === "number" ? r.analysis.overall : 0))
+        .filter((s) => s > 0);
+      const avgScore = scores.length
+        ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        : 0;
+
+      const name = nameById[traineeId] || traineeId;
       return {
-        id: x?.session_id || `${traineeId}-${last}`,
         learnerId: traineeId,
-        initials: initialsFromName(name),
+        initials: initials(name),
         name,
-        lastSessionDate: last,
-        vehicle,
-        score,
-        outcome,
-        profile,
+        lastSessionDate: formatDate(latest?.created_at),
+        sessionCount: results.length,
+        roadType: roadTypeFrom(latest),
+        score: avgScore,
+        outcome: (avgScore >= 60 ? "Passed" : "Failed") as Outcome,
+        profile: profileFrom(latest?.analysis?.behavior),
       };
     });
-  }, [recordsRaw, nameById]);
+  }, [resultsRaw, nameById]);
 
+  // KPI aggregates
+  const drowsyCount     = useMemo(() => all.filter((r) => r.profile === "Drowsy").length,     [all]);
+  const aggressiveCount = useMemo(() => all.filter((r) => r.profile === "Aggressive").length, [all]);
+  const normalCount     = useMemo(() => all.filter((r) => r.profile === "Normal").length,     [all]);
+  const total = all.length;
+
+  const drowsyPct     = Math.round((drowsyCount     / Math.max(1, total)) * 100);
+  const aggressivePct = Math.round((aggressiveCount / Math.max(1, total)) * 100);
+  const normalPct     = Math.round((normalCount     / Math.max(1, total)) * 100);
+
+  // Filtered + paginated
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return all.filter((r) => {
-      const matchesQ =
-        !q ||
-        r.name.toLowerCase().includes(q) ||
-        r.learnerId.toLowerCase().includes(q) ||
-        r.vehicle.toLowerCase().includes(q);
-
-      const matchesOutcome = outcomeFilter === "All Outcomes" || r.outcome === outcomeFilter;
-      const matchesVehicle = vehicleFilter === "All Vehicles" || r.vehicle === vehicleFilter;
-
-      return matchesQ && matchesOutcome && matchesVehicle;
+      const matchQ = !q || r.name.toLowerCase().includes(q) || r.learnerId.toLowerCase().includes(q);
+      const matchO = outcomeFilter === "All" || r.outcome === outcomeFilter;
+      const matchP = profileFilter === "All" || r.profile === profileFilter;
+      return matchQ && matchO && matchP;
     });
-  }, [all, search, outcomeFilter, vehicleFilter]);
+  }, [all, search, outcomeFilter, profileFilter]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, outcomeFilter, vehicleFilter, isWide]);
+  useEffect(() => { setPageNum(1); }, [search, outcomeFilter, profileFilter, isWide]);
 
-  // KPI distribution
-  const total = all.length;
-  const drowsyCount = all.filter((r) => r.profile === "Drowsy").length;
-  const aggressiveCount = all.filter((r) => r.profile === "Aggressive").length;
-  const normalCount = all.filter((r) => r.profile === "Normal").length;
-
-  const drowsyPct = Math.round((drowsyCount / Math.max(1, total)) * 100);
-  const aggressivePct = Math.round((aggressiveCount / Math.max(1, total)) * 100);
-  const normalPct = Math.round((normalCount / Math.max(1, total)) * 100);
-
-  // pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const startIndex = (safePage - 1) * PAGE_SIZE;
-  const endIndex = Math.min(filtered.length, startIndex + PAGE_SIZE);
-  const pageItems = filtered.slice(startIndex, endIndex);
+  const safePage   = Math.min(pageNum, totalPages);
+  const startIdx   = (safePage - 1) * PAGE_SIZE;
+  const pageItems  = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+  const endIdx     = startIdx + pageItems.length;
 
-  const onView = (r: LearnerRecord) => {
-    router.push(`/student/${r.learnerId}` as any);
-  };
+  function cycleOutcome() {
+    setOutcomeFilter((v) => v === "All" ? "Passed" : v === "Passed" ? "Failed" : "All");
+  }
+  function cycleProfile() {
+    setProfileFilter((v) => v === "All" ? "Normal" : v === "Normal" ? "Drowsy" : v === "Drowsy" ? "Aggressive" : "All");
+  }
 
-  const toggleOutcome = () =>
-    setOutcomeFilter((v) => (v === "All Outcomes" ? "Passed" : v === "Passed" ? "Failed" : "All Outcomes"));
-
-  const toggleVehicle = () => {
-    // cycle vehicles present in data
-    const vehicles = Array.from(new Set(all.map((x) => x.vehicle))).filter(Boolean);
-    const opts = ["All Vehicles", ...vehicles];
-    const idx = Math.max(0, opts.indexOf(vehicleFilter));
-    setVehicleFilter(opts[(idx + 1) % opts.length]);
-  };
-
-  const renderPagination = () => {
-    const goPrev = () => setPage((p) => Math.max(1, p - 1));
-    const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
-
-    const windowSize = 5;
-    const half = Math.floor(windowSize / 2);
-    let start = Math.max(1, safePage - half);
-    let end = Math.min(totalPages, start + windowSize - 1);
-    start = Math.max(1, end - windowSize + 1);
-
-    const nums: number[] = [];
-    for (let i = start; i <= end; i++) nums.push(i);
-
-    return (
-      <View style={styles.pagination}>
-        <Pressable
-          onPress={goPrev}
-          disabled={safePage === 1}
-          style={({ pressed }) => [styles.pageBtn, safePage === 1 ? styles.disabledBtn : null, pressed ? { opacity: 0.9 } : null]}
-        >
-          <Text style={styles.pageBtnText}>Previous</Text>
-        </Pressable>
-
-        {nums.map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => setPage(n)}
-            style={({ pressed }) => [styles.pageNum, n === safePage ? styles.pageNumOn : null, pressed ? { opacity: 0.9 } : null]}
-          >
-            <Text style={n === safePage ? styles.pageNumTextOn : styles.pageNumText}>{n}</Text>
-          </Pressable>
-        ))}
-
-        <Pressable
-          onPress={goNext}
-          disabled={safePage === totalPages}
-          style={({ pressed }) => [styles.pageBtn, safePage === totalPages ? styles.disabledBtn : null, pressed ? { opacity: 0.9 } : null]}
-        >
-          <Text style={styles.pageBtnText}>Next</Text>
-        </Pressable>
-      </View>
-    );
-  };
+  // ── Loading / Error ────────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <View style={[styles.page, { alignItems: "center", justifyContent: "center" }]}>
-        <Text style={{ fontWeight: "900", color: "#667085" }}>Loading records…</Text>
+      <View style={page.center}>
+        <ActivityIndicator size="large" color={colors.purpleDark} />
+        <Text style={page.centerText}>Loading records…</Text>
       </View>
     );
   }
 
-  return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>Learner Records</Text>
-      <Text style={styles.h2}>View performance outcomes and session history</Text>
+  if (error) {
+    return (
+      <View style={page.center}>
+        <Ionicons name="alert-circle-outline" size={44} color={colors.red} />
+        <Text style={[page.centerText, { color: colors.red, marginTop: 8 }]}>{error}</Text>
+        <Pressable onPress={load} style={rs.retryBtn}>
+          <Text style={rs.retryBtnText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
-      <View style={[styles.kpiRow, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
-        <KPIPressable
-          title="% Drowsy Drivers"
-          value={`${drowsyPct}%`}
-          sub={`${drowsyCount} learner${drowsyCount === 1 ? "" : "s"}`}
-          subColor="#B91C1C"
-          icon="😴"
-          iconBg="#FEF2F2"
-          iconBorder="#FECACA"
-          onPress={() => {}}
-        />
-        <KPIPressable
-          title="% Aggressive Drivers"
-          value={`${aggressivePct}%`}
-          sub={`${aggressiveCount} learner${aggressiveCount === 1 ? "" : "s"}`}
-          subColor="#B45309"
-          icon="⚡"
-          iconBg="#FFFBEB"
-          iconBorder="#FDE68A"
-          onPress={() => {}}
-        />
-        <KPIPressable
-          title="% Normal Drivers"
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  return (
+    <ScrollView
+      style={page.base}
+      contentContainerStyle={[page.content, { paddingTop: 16 }]}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View>
+        <Text style={rs.h1}>Learner Records</Text>
+        <Text style={rs.h2}>
+          {total} learner{total !== 1 ? "s" : ""} · performance and session history
+        </Text>
+      </View>
+
+      {/* KPI strip */}
+      <View style={[rs.kpiStrip, isWide && { flexDirection: "row" }]}>
+        <KpiCard
+          icon="checkmark-circle-outline"
+          label="Normal profile"
           value={`${normalPct}%`}
-          sub={`${normalCount} learner${normalCount === 1 ? "" : "s"}`}
-          subColor="#16A34A"
-          icon="✅"
-          iconBg="#DCFCE7"
-          iconBorder="#BBF7D0"
-          onPress={() => {}}
+          sub={`${normalCount} learner${normalCount !== 1 ? "s" : ""}`}
+          iconBg={colors.greenLight}
+          iconColor={colors.green}
+        />
+        <KpiCard
+          icon="moon-outline"
+          label="Drowsy profile"
+          value={`${drowsyPct}%`}
+          sub={`${drowsyCount} learner${drowsyCount !== 1 ? "s" : ""}`}
+          iconBg={colors.redLight}
+          iconColor={colors.red}
+        />
+        <KpiCard
+          icon="warning-outline"
+          label="Aggressive profile"
+          value={`${aggressivePct}%`}
+          sub={`${aggressiveCount} learner${aggressiveCount !== 1 ? "s" : ""}`}
+          iconBg="#FEF3C7"
+          iconColor="#B45309"
         />
       </View>
 
-      <View style={styles.filterCard}>
-        <View style={[styles.filterRow, isWide ? { flexDirection: "row" } : { flexDirection: "column" }]}>
-          <View style={styles.searchWrap}>
-            <Text style={styles.searchIcon}>🔎</Text>
+      {/* Filters */}
+      <View style={[card.base, rs.filterCard]}>
+        <View style={[rs.filterRow, isWide && { flexDirection: "row" }]}>
+          {/* Search */}
+          <View style={rs.searchWrap}>
+            <Ionicons name="search-outline" size={16} color={colors.muted} style={{ marginRight: 8 }} />
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Search by name or ID..."
-              placeholderTextColor="#98A2B3"
-              style={styles.searchInput}
+              placeholder="Search by name or ID…"
+              placeholderTextColor={colors.muted}
+              style={rs.searchInput}
             />
           </View>
 
-          <Pressable onPress={toggleOutcome} style={styles.dropdown}>
-            <Text style={styles.dropdownText}>{outcomeFilter}</Text>
-            <Text style={styles.dropdownCaret}>▾</Text>
+          {/* Outcome toggle */}
+          <Pressable onPress={cycleOutcome} style={rs.filterBtn}>
+            <Text style={rs.filterBtnText}>
+              {outcomeFilter === "All" ? "All Outcomes" : outcomeFilter}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={colors.subtext} />
           </Pressable>
 
-          <Pressable onPress={toggleVehicle} style={styles.dropdown}>
-            <Text style={styles.dropdownText}>{vehicleFilter}</Text>
-            <Text style={styles.dropdownCaret}>▾</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.exportRow}>
-          <Pressable style={({ pressed }) => [styles.exportBtn, pressed ? { opacity: 0.9 } : null]} onPress={() => Alert.alert("Export", "Export PDF (needs backend)")} >
-            <Text style={styles.exportText}>⬇️  Export PDF</Text>
-          </Pressable>
-
-          <Pressable style={({ pressed }) => [styles.exportBtn, pressed ? { opacity: 0.9 } : null]} onPress={() => Alert.alert("Export", "Export CSV (needs backend)")} >
-            <Text style={styles.exportText}>⬇️  Export CSV</Text>
+          {/* Profile toggle */}
+          <Pressable onPress={cycleProfile} style={rs.filterBtn}>
+            <Text style={rs.filterBtnText}>
+              {profileFilter === "All" ? "All Profiles" : profileFilter}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={colors.subtext} />
           </Pressable>
         </View>
       </View>
 
+      {/* Table — wide */}
       {isWide ? (
-        <View style={styles.tableCard}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.th, { flex: 2.2 }]}>Learner Name</Text>
-            <Text style={[styles.th, { flex: 1 }]}>ID</Text>
-            <Text style={[styles.th, { flex: 1.6 }]}>Last Session Date</Text>
-            <Text style={[styles.th, { flex: 1.2 }]}>Vehicle</Text>
-            <Text style={[styles.th, { flex: 1.8 }]}>Driving Score</Text>
-            <Text style={[styles.th, { flex: 1.2 }]}>Outcome</Text>
-            <Text style={[styles.th, { flex: 1.1, textAlign: "right" }]}>Report</Text>
+        <View style={[card.base, rs.tableCard]}>
+          {/* Header */}
+          <View style={rs.tableHeader}>
+            <Text style={[rs.th, { flex: 2.4 }]}>Learner</Text>
+            <Text style={[rs.th, { flex: 1 }]}>Sessions</Text>
+            <Text style={[rs.th, { flex: 1.4 }]}>Last Session</Text>
+            <Text style={[rs.th, { flex: 1 }]}>Road Type</Text>
+            <Text style={[rs.th, { flex: 1.6 }]}>Avg Score</Text>
+            <Text style={[rs.th, { flex: 1 }]}>Outcome</Text>
+            <Text style={[rs.th, { flex: 1, textAlign: "right" }]}>Profile</Text>
           </View>
 
-          {pageItems.map((r) => (
-            <View key={r.id} style={styles.tr}>
-              <View style={[styles.tdCell, { flex: 2.2, flexDirection: "row", alignItems: "center", gap: 10 }]}>
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>{r.initials}</Text>
+          {pageItems.length === 0 ? (
+            <View style={rs.emptyTable}>
+              <Text style={rs.emptyText}>No records match your filters</Text>
+            </View>
+          ) : (
+            pageItems.map((r, i) => (
+              <View
+                key={r.learnerId}
+                style={[rs.tr, i < pageItems.length - 1 && rs.trBorder]}
+              >
+                {/* Learner */}
+                <View style={[rs.tdCell, { flex: 2.4, flexDirection: "row", alignItems: "center", gap: 10 }]}>
+                  <View style={rs.avatar}>
+                    <Text style={rs.avatarText}>{r.initials}</Text>
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={rs.tdName} numberOfLines={1}>{r.name}</Text>
+                    <Text style={rs.tdSub} numberOfLines={1}>{r.learnerId}</Text>
+                  </View>
                 </View>
-                <Text style={styles.nameText} numberOfLines={1}>{r.name}</Text>
+
+                <Text style={[rs.tdText, { flex: 1 }]}>{r.sessionCount}</Text>
+                <Text style={[rs.tdText, { flex: 1.4 }]}>{r.lastSessionDate}</Text>
+                <Text style={[rs.tdText, { flex: 1 }]}>{r.roadType}</Text>
+
+                {/* Score bar */}
+                <View style={[rs.tdCell, { flex: 1.6 }]}>
+                  <View style={rs.scoreRow}>
+                    <View style={rs.scoreTrack}>
+                      <View
+                        style={[
+                          rs.scoreFill,
+                          {
+                            width: `${Math.max(0, Math.min(100, r.score))}%` as any,
+                            backgroundColor: scoreColor(r.score),
+                          },
+                        ]}
+                      />
+                    </View>
+                    <Text style={[rs.scoreNum, { color: scoreColor(r.score) }]}>{r.score}</Text>
+                  </View>
+                </View>
+
+                {/* Outcome */}
+                <View style={[rs.tdCell, { flex: 1 }]}>
+                  <View
+                    style={[
+                      rs.outcomePill,
+                      { backgroundColor: r.outcome === "Passed" ? colors.darkBtn : colors.red },
+                    ]}
+                  >
+                    <Text style={rs.outcomeText}>{r.outcome}</Text>
+                  </View>
+                </View>
+
+                {/* Profile */}
+                <View style={[rs.tdCell, { flex: 1, alignItems: "flex-end" }]}>
+                  <ProfilePill profile={r.profile} />
+                </View>
               </View>
+            ))
+          )}
 
-              <Text style={[styles.tdText, { flex: 1 }]}>{r.learnerId}</Text>
-              <Text style={[styles.tdText, { flex: 1.6 }]}>{r.lastSessionDate}</Text>
-              <Text style={[styles.tdText, { flex: 1.2 }]}>{r.vehicle}</Text>
+          {/* Footer + pagination */}
+          <View style={rs.tableFooter}>
+            <Text style={rs.footerText}>
+              {filtered.length === 0
+                ? "No results"
+                : `${startIdx + 1}–${endIdx} of ${filtered.length}`}
+            </Text>
+            <Pagination page={safePage} total={totalPages} onPage={setPageNum} />
+          </View>
+        </View>
+      ) : (
+        /* Mobile cards */
+        <View style={{ gap: 12 }}>
+          {pageItems.length === 0 ? (
+            <View style={[card.base, rs.emptyCard]}>
+              <Text style={rs.emptyText}>No records match your filters</Text>
+            </View>
+          ) : (
+            pageItems.map((r) => (
+              <View key={r.learnerId} style={[card.base, rs.mobileCard]}>
+                <View style={rs.mobileTop}>
+                  <View style={rs.avatar}>
+                    <Text style={rs.avatarText}>{r.initials}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={rs.mobileName} numberOfLines={1}>{r.name}</Text>
+                    <Text style={rs.mobileSub}>{r.learnerId}</Text>
+                  </View>
+                  <ProfilePill profile={r.profile} />
+                </View>
 
-              <View style={[styles.tdCell, { flex: 1.8 }]}>
-                <View style={styles.scoreRow}>
-                  <View style={styles.scoreTrack}>
+                <View style={rs.mobileMeta}>
+                  <MiniTag label="Sessions" value={String(r.sessionCount)} />
+                  <MiniTag label="Last Session" value={r.lastSessionDate} />
+                  <MiniTag label="Road Type" value={r.roadType} />
+                </View>
+
+                <View style={rs.mobileScoreRow}>
+                  <View style={rs.scoreTrack}>
                     <View
                       style={[
-                        styles.scoreFill,
+                        rs.scoreFill,
                         {
-                          width: `${Math.max(0, Math.min(100, r.score))}%`,
-                          backgroundColor: r.score >= 70 ? "#22C55E" : "#EF4444",
+                          width: `${Math.max(0, Math.min(100, r.score))}%` as any,
+                          backgroundColor: scoreColor(r.score),
                         },
                       ]}
                     />
                   </View>
-                  <Text style={styles.scoreText}>{r.score}%</Text>
-                </View>
-              </View>
-
-              <View style={[styles.tdCell, { flex: 1.2 }]}>
-                <View style={[styles.outcomePill, r.outcome === "Passed" ? styles.passPill : styles.failPill]}>
-                  <Text style={styles.outcomeText}>{r.outcome}</Text>
-                </View>
-              </View>
-
-              <View style={[styles.tdCell, { flex: 1.1, alignItems: "flex-end" }]}>
-                <Pressable style={({ pressed }) => [styles.viewBtn, pressed ? { opacity: 0.9 } : null]} onPress={() => onView(r)}>
-                  <Text style={styles.viewBtnText}>📄  View</Text>
-                </Pressable>
-              </View>
-            </View>
-          ))}
-
-          <View style={styles.tableFooter}>
-            <Text style={styles.footerText}>
-              Showing {filtered.length === 0 ? 0 : startIndex + 1} to {endIndex} of {filtered.length} results
-            </Text>
-            {renderPagination()}
-          </View>
-        </View>
-      ) : (
-        <View style={styles.mobileListWrap}>
-          {pageItems.map((r) => (
-            <View key={r.id} style={styles.mobileCard}>
-              <View style={styles.mobileTopRow}>
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>{r.initials}</Text>
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.mobileName} numberOfLines={1}>{r.name}</Text>
-                  <Text style={styles.mobileSub} numberOfLines={1}>{r.learnerId} • {r.lastSessionDate}</Text>
-                </View>
-
-                <View style={[styles.outcomePill, r.outcome === "Passed" ? styles.passPill : styles.failPill]}>
-                  <Text style={styles.outcomeText}>{r.outcome}</Text>
-                </View>
-              </View>
-
-              <View style={styles.mobileMidRow}>
-                <MiniTag label="Vehicle" value={r.vehicle} />
-                <MiniTag label="Score" value={`${r.score}%`} />
-              </View>
-
-              <View style={styles.mobileScoreRow}>
-                <View style={styles.scoreTrack}>
+                  <Text style={[rs.scoreNum, { color: scoreColor(r.score), marginLeft: 8 }]}>
+                    {r.score}/100
+                  </Text>
                   <View
                     style={[
-                      styles.scoreFill,
-                      {
-                        width: `${Math.max(0, Math.min(100, r.score))}%`,
-                        backgroundColor: r.score >= 70 ? "#22C55E" : "#EF4444",
-                      },
+                      rs.outcomePill,
+                      { backgroundColor: r.outcome === "Passed" ? colors.darkBtn : colors.red, marginLeft: 8 },
                     ]}
-                  />
+                  >
+                    <Text style={rs.outcomeText}>{r.outcome}</Text>
+                  </View>
                 </View>
-
-                <Pressable style={({ pressed }) => [styles.mobileViewBtn, pressed ? { opacity: 0.9 } : null]} onPress={() => onView(r)}>
-                  <Text style={styles.mobileViewText}>📄 View</Text>
-                </Pressable>
               </View>
-            </View>
-          ))}
+            ))
+          )}
 
-          <View style={styles.mobileFooter}>
-            <Text style={styles.footerText}>
-              Showing {filtered.length === 0 ? 0 : startIndex + 1} to {endIndex} of {filtered.length} results
+          <View style={[card.base, rs.mobileFooter]}>
+            <Text style={rs.footerText}>
+              {filtered.length === 0
+                ? "No results"
+                : `${startIdx + 1}–${endIdx} of ${filtered.length}`}
             </Text>
-            {renderPagination()}
+            <Pagination page={safePage} total={totalPages} onPage={setPageNum} />
           </View>
         </View>
       )}
+
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
 
-function KPIPressable({
-  title, value, sub, subColor, icon, iconBg, iconBorder, onPress,
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+function Pagination({
+  page,
+  total,
+  onPage,
 }: {
-  title: string;
-  value: string;
-  sub?: string;
-  subColor?: string;
-  icon: string;
-  iconBg: string;
-  iconBorder: string;
-  onPress: () => void;
+  page: number;
+  total: number;
+  onPage: (n: number) => void;
 }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.kpiCard, pressed ? { opacity: 0.92 } : null]}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.kpiTitle}>{title}</Text>
-        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8, marginTop: 8 }}>
-          <Text style={styles.kpiValue}>{value}</Text>
-          {sub ? <Text style={[styles.kpiSub, { color: subColor || "#667085" }]}>{sub}</Text> : null}
-        </View>
-      </View>
+  const half = 2;
+  let start = Math.max(1, page - half);
+  let end   = Math.min(total, start + 4);
+  start      = Math.max(1, end - 4);
+  const nums: number[] = [];
+  for (let i = start; i <= end; i++) nums.push(i);
 
-      <View style={[styles.kpiIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
-        <Text style={{ fontSize: 16 }}>{icon}</Text>
-      </View>
-    </Pressable>
-  );
-}
-
-function MiniTag({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.miniTag}>
-      <Text style={styles.miniLabel}>{label}</Text>
-      <Text style={styles.miniValue} numberOfLines={1}>{value}</Text>
+    <View style={rs.pagination}>
+      <Pressable
+        onPress={() => onPage(Math.max(1, page - 1))}
+        disabled={page === 1}
+        style={[rs.pageBtn, page === 1 && { opacity: 0.4 }]}
+      >
+        <Ionicons name="chevron-back" size={14} color={colors.text} />
+        <Text style={rs.pageBtnText}>Prev</Text>
+      </Pressable>
+
+      {nums.map((n) => (
+        <Pressable
+          key={n}
+          onPress={() => onPage(n)}
+          style={[rs.pageNum, n === page && rs.pageNumOn]}
+        >
+          <Text style={[rs.pageNumText, n === page && rs.pageNumTextOn]}>{n}</Text>
+        </Pressable>
+      ))}
+
+      <Pressable
+        onPress={() => onPage(Math.min(total, page + 1))}
+        disabled={page === total}
+        style={[rs.pageBtn, page === total && { opacity: 0.4 }]}
+      >
+        <Text style={rs.pageBtnText}>Next</Text>
+        <Ionicons name="chevron-forward" size={14} color={colors.text} />
+      </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#F5F7FB" },
-  content: { padding: 16, paddingBottom: 26 },
+// ─── MiniTag ─────────────────────────────────────────────────────────────────
 
-  h1: { color: "#101828", fontWeight: "900", fontSize: 20 },
-  h2: { marginTop: 6, color: "#667085", fontWeight: "700", fontSize: 12, marginBottom: 14 },
+function MiniTag({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={rs.miniTag}>
+      <Text style={rs.miniLabel}>{label}</Text>
+      <Text style={rs.miniValue} numberOfLines={1}>{value}</Text>
+    </View>
+  );
+}
 
-  kpiRow: { gap: 12, marginBottom: 14 },
-  kpiCard: { flex: 1, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 76 },
-  kpiTitle: { color: "#667085", fontWeight: "800", fontSize: 12 },
-  kpiValue: { color: "#101828", fontWeight: "900", fontSize: 20 },
-  kpiSub: { fontWeight: "900", fontSize: 12 },
-  kpiIcon: { width: 40, height: 40, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+// ═══════════════════════════════════════════════════════════════════════════════
+// STYLES
+// ═══════════════════════════════════════════════════════════════════════════════
 
-  filterCard: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 16, padding: 12, marginBottom: 14 },
-  filterRow: { gap: 10 },
+const rs = StyleSheet.create({
+  // ── Header
+  h1: { fontSize: 24, fontWeight: "900", color: colors.text, letterSpacing: -0.5 },
+  h2: { fontSize: 13, fontWeight: "600", color: colors.subtext, marginTop: 4 },
 
-  searchWrap: { flex: 1, minHeight: 46, flexDirection: "row", alignItems: "center", backgroundColor: "#F9FAFB", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 14, paddingHorizontal: 12 },
-  searchIcon: { marginRight: 8, fontSize: 14 },
-  searchInput: { flex: 1, color: "#101828", fontWeight: "700" },
+  // ── KPI
+  kpiStrip: { flexDirection: "column", gap: 10 },
+  kpiCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    minWidth: 0,
+  },
+  kpiIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  kpiLabel: { fontSize: 11, fontWeight: "700", color: colors.subtext },
+  kpiValue: { fontSize: 22, fontWeight: "900", color: colors.text, marginTop: 2 },
+  kpiSub:   { fontSize: 11, fontWeight: "600", color: colors.muted, marginTop: 1 },
 
-  dropdown: { minHeight: 46, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: "#EAECF0", backgroundColor: "#F9FAFB", flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  dropdownText: { color: "#101828", fontWeight: "800", fontSize: 12 },
-  dropdownCaret: { color: "#667085", fontWeight: "900" },
+  // ── Filters
+  filterCard: { padding: 14 },
+  filterRow:  { gap: 10, flexDirection: "column" },
+  searchWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchInput: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 13 },
+  filterBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.inputBg,
+    alignSelf: "flex-start",
+  },
+  filterBtnText: { fontSize: 13, fontWeight: "800", color: colors.text },
 
-  exportRow: { flexDirection: "row", gap: 10, marginTop: 12 },
-  exportBtn: { borderRadius: 12, borderWidth: 1, borderColor: "#EAECF0", backgroundColor: "#FFFFFF", paddingVertical: 10, paddingHorizontal: 12 },
-  exportText: { color: "#101828", fontWeight: "900", fontSize: 12 },
-
-  tableCard: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 16, overflow: "hidden" },
-  tableHeader: { flexDirection: "row", paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#EAECF0", backgroundColor: "#FFFFFF" },
-  th: { color: "#667085", fontWeight: "900", fontSize: 11 },
-
-  tr: { flexDirection: "row", paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F2F4F7", alignItems: "center" },
+  // ── Table
+  tableCard: { padding: 0, overflow: "hidden" },
+  tableHeader: {
+    flexDirection: "row",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.inputBg,
+  },
+  th: { fontSize: 11, fontWeight: "900", color: colors.subtext, textTransform: "uppercase" },
+  tr: { flexDirection: "row", paddingHorizontal: 14, paddingVertical: 13, alignItems: "center" },
+  trBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderLight },
   tdCell: {},
-  tdText: { color: "#101828", fontWeight: "800", fontSize: 12 },
+  tdText: { fontSize: 13, fontWeight: "700", color: colors.text },
+  tdName: { fontSize: 13, fontWeight: "900", color: colors.text },
+  tdSub:  { fontSize: 11, fontWeight: "600", color: colors.subtext, marginTop: 1 },
 
-  avatarCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center" },
-  avatarText: { color: "#4F46E5", fontWeight: "900", fontSize: 12 },
-  nameText: { color: "#101828", fontWeight: "900", fontSize: 12, maxWidth: 220 },
+  emptyTable: { paddingVertical: 32, alignItems: "center" },
+  emptyCard:  { paddingVertical: 32, alignItems: "center" },
+  emptyText:  { fontSize: 13, fontWeight: "700", color: colors.muted },
 
-  scoreRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  scoreTrack: { flex: 1, height: 8, borderRadius: 99, backgroundColor: "#E2E8F0", overflow: "hidden" },
-  scoreFill: { height: "100%", borderRadius: 99 },
-  scoreText: { color: "#101828", fontWeight: "900", fontSize: 12 },
+  tableFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  footerText: { fontSize: 12, fontWeight: "700", color: colors.subtext },
 
-  outcomePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, alignSelf: "flex-start" },
-  passPill: { backgroundColor: "#0B1220" },
-  failPill: { backgroundColor: "#E11D48" },
-  outcomeText: { color: "#FFFFFF", fontWeight: "900", fontSize: 11 },
+  // ── Avatar
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  avatarText: { fontSize: 13, fontWeight: "900", color: "#4F46E5" },
 
-  viewBtn: { borderRadius: 12, borderWidth: 1, borderColor: "#EAECF0", backgroundColor: "#FFFFFF", paddingVertical: 8, paddingHorizontal: 10 },
-  viewBtnText: { color: "#101828", fontWeight: "900", fontSize: 12 },
+  // ── Score
+  scoreRow:  { flexDirection: "row", alignItems: "center", gap: 8 },
+  scoreTrack: { flex: 1, height: 6, borderRadius: 99, backgroundColor: colors.borderLight, overflow: "hidden" },
+  scoreFill:  { height: "100%", borderRadius: 99 },
+  scoreNum:   { fontSize: 13, fontWeight: "900", minWidth: 28 },
 
-  tableFooter: { paddingHorizontal: 12, paddingVertical: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
-  footerText: { color: "#667085", fontWeight: "800", fontSize: 12 },
+  // ── Outcome pill
+  outcomePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    alignSelf: "flex-start",
+  },
+  outcomeText: { fontSize: 11, fontWeight: "900", color: "#FFFFFF" },
 
-  mobileListWrap: { gap: 12 },
-  mobileCard: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 16, padding: 12 },
-  mobileTopRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  mobileName: { color: "#101828", fontWeight: "900", fontSize: 14 },
-  mobileSub: { marginTop: 2, color: "#667085", fontWeight: "800", fontSize: 12 },
+  // ── Profile pill
+  pill: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, alignSelf: "flex-start" },
+  pillText: { fontSize: 11, fontWeight: "800" },
 
-  mobileMidRow: { flexDirection: "row", gap: 8, marginTop: 10, flexWrap: "wrap" },
-  miniTag: { flexGrow: 1, minWidth: 110, borderRadius: 12, borderWidth: 1, borderColor: "#EAECF0", backgroundColor: "#F9FAFB", paddingVertical: 8, paddingHorizontal: 10 },
-  miniLabel: { color: "#667085", fontWeight: "900", fontSize: 10 },
-  miniValue: { marginTop: 3, color: "#101828", fontWeight: "900", fontSize: 12 },
+  // ── Mobile cards
+  mobileCard: { gap: 12, paddingVertical: 14, paddingHorizontal: 14 },
+  mobileTop:  { flexDirection: "row", alignItems: "center", gap: 10 },
+  mobileName: { fontSize: 14, fontWeight: "900", color: colors.text },
+  mobileSub:  { fontSize: 11, fontWeight: "600", color: colors.subtext, marginTop: 1 },
+  mobileMeta: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  mobileScoreRow: { flexDirection: "row", alignItems: "center" },
+  mobileFooter: { padding: 12 },
 
-  mobileScoreRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 },
-  mobileViewBtn: { borderRadius: 12, borderWidth: 1, borderColor: "#EAECF0", backgroundColor: "#FFFFFF", paddingVertical: 10, paddingHorizontal: 12 },
-  mobileViewText: { color: "#101828", fontWeight: "900", fontSize: 12 },
+  // ── MiniTag
+  miniTag: {
+    flexGrow: 1,
+    minWidth: 90,
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  miniLabel: { fontSize: 10, fontWeight: "800", color: colors.muted },
+  miniValue: { fontSize: 12, fontWeight: "900", color: colors.text, marginTop: 2 },
 
-  mobileFooter: { marginTop: 2, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 16, padding: 12 },
+  // ── Pagination
+  pagination: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  pageBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.cardBg,
+  },
+  pageBtnText: { fontSize: 12, fontWeight: "800", color: colors.text },
+  pageNum: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.cardBg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pageNumOn: { backgroundColor: colors.darkBtn, borderColor: colors.darkBtn },
+  pageNumText:   { fontSize: 13, fontWeight: "800", color: colors.text },
+  pageNumTextOn: { fontSize: 13, fontWeight: "900", color: "#FFFFFF" },
 
-  pagination: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
-  pageBtn: { borderRadius: 10, borderWidth: 1, borderColor: "#EAECF0", paddingVertical: 10, paddingHorizontal: 12, backgroundColor: "#FFFFFF" },
-  pageBtnText: { color: "#101828", fontWeight: "900", fontSize: 12 },
-
-  pageNum: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, borderColor: "#EAECF0", backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
-  pageNumOn: { backgroundColor: "#0B1220", borderColor: "#0B1220" },
-  pageNumText: { color: "#101828", fontWeight: "900", fontSize: 12 },
-  pageNumTextOn: { color: "#FFFFFF", fontWeight: "900", fontSize: 12 },
-
-  disabledBtn: { opacity: 0.45 },
+  // ── Retry
+  retryBtn: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: colors.purpleDark,
+  },
+  retryBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 });

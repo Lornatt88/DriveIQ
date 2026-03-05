@@ -66,11 +66,15 @@ class SessionNoteUpdate(BaseModel):
 
 
 class SessionStartRequest(BaseModel):
-    pass
+    road_type: str = "Secondary"  # "Motorway" or "Secondary"
 
 
 class SessionEndRequest(BaseModel):
     pass
+
+
+class GenerateFeedbackRequest(BaseModel):
+    instructor_notes: str = ""
 
 
 # ── Settings ──────────────────────────────────────────────────────────────────
