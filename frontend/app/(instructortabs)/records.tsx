@@ -134,20 +134,27 @@ export default function RecordsScreen() {
   const [pageNum, setPageNum] = useState(1);
 
   async function load() {
+    setError(null);
+    setLoading(true);
+    const errors: string[] = [];
+
+    // Fetch independently — one failure shouldn't block the other
     try {
-      setError(null);
-      setLoading(true);
-      const [l, r] = await Promise.all([
-        apiGet("/instructor/learners"),
-        apiGet("/records/instructor"),
-      ]);
+      const l = await apiGet("/instructor/learners");
       setLearners(Array.isArray(l) ? l : []);
+    } catch (e: any) {
+      errors.push(`Learners: ${e?.message ?? "failed"}`);
+    }
+
+    try {
+      const r = await apiGet("/records/instructor");
       setResultsRaw(Array.isArray(r) ? r : []);
     } catch (e: any) {
-      setError(e?.message ?? "Failed to load records");
-    } finally {
-      setLoading(false);
+      errors.push(`Records: ${e?.message ?? "failed"}`);
     }
+
+    if (errors.length > 0) setError(errors.join("\n"));
+    setLoading(false);
   }
 
   useEffect(() => { load(); }, []);

@@ -132,19 +132,13 @@ function SessionCard({
           </View>
         </View>
 
-        {/* Score badge — or Pending if report not yet generated */}
-        {session.report_ready === false ? (
-          <View style={ls.pendingBadge}>
-            <Text style={ls.pendingBadgeText}>Pending</Text>
-          </View>
-        ) : (
-          <View style={[ls.scoreBadge, { backgroundColor: getScoreBg(session.performance_score) }]}>
-            <Text style={[ls.scoreBadgeText, { color: scoreColor }]}>
-              {session.performance_score}
-            </Text>
-            <Text style={[ls.scoreBadgeUnit, { color: scoreColor }]}>/100</Text>
-          </View>
-        )}
+        {/* Score badge */}
+        <View style={[ls.scoreBadge, { backgroundColor: getScoreBg(session.performance_score) }]}>
+          <Text style={[ls.scoreBadgeText, { color: scoreColor }]}>
+            {session.performance_score}
+          </Text>
+          <Text style={[ls.scoreBadgeUnit, { color: scoreColor }]}>/100</Text>
+        </View>
       </View>
 
       {/* Mini timeline preview */}
@@ -153,47 +147,36 @@ function SessionCard({
       {/* Bottom: status + flagged count */}
       <View style={ls.cardBottomRow}>
         <View style={ls.statusRow}>
-          {session.report_ready === false ? (
-            <View style={[ls.statusBadge, { backgroundColor: "#F3F4F6" }]}>
-              <Ionicons name="time-outline" size={14} color={colors.subtext} />
-              <Text style={[ls.statusText, { color: colors.subtext }]}>
-                Report pending
+          <View
+            style={[
+              ls.statusBadge,
+              {
+                backgroundColor: session.passed ? colors.greenLight : colors.redLight,
+              },
+            ]}
+          >
+            <Ionicons
+              name={session.passed ? "checkmark-circle" : "close-circle"}
+              size={14}
+              color={session.passed ? colors.green : colors.red}
+            />
+            <Text
+              style={[
+                ls.statusText,
+                { color: session.passed ? colors.greenDark ?? "#166534" : colors.redDark },
+              ]}
+            >
+              {session.passed ? "Passed" : "Needs Improvement"}
+            </Text>
+          </View>
+
+          {flagged > 0 && (
+            <View style={ls.flaggedBadge}>
+              <Ionicons name="warning-outline" size={12} color="#92400E" />
+              <Text style={ls.flaggedText}>
+                {flagged} flagged window{flagged > 1 ? "s" : ""}
               </Text>
             </View>
-          ) : (
-            <>
-              <View
-                style={[
-                  ls.statusBadge,
-                  {
-                    backgroundColor: session.passed ? colors.greenLight : colors.redLight,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={session.passed ? "checkmark-circle" : "close-circle"}
-                  size={14}
-                  color={session.passed ? colors.green : colors.red}
-                />
-                <Text
-                  style={[
-                    ls.statusText,
-                    { color: session.passed ? colors.greenDark ?? "#166534" : colors.redDark },
-                  ]}
-                >
-                  {session.passed ? "Passed" : "Needs Improvement"}
-                </Text>
-              </View>
-
-              {flagged > 0 && (
-                <View style={ls.flaggedBadge}>
-                  <Ionicons name="warning-outline" size={12} color="#92400E" />
-                  <Text style={ls.flaggedText}>
-                    {flagged} flagged window{flagged > 1 ? "s" : ""}
-                  </Text>
-                </View>
-              )}
-            </>
           )}
         </View>
 

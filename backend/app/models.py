@@ -24,6 +24,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+
 class UserPublic(BaseModel):
     user_id: str
     role: str

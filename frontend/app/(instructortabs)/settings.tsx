@@ -7,6 +7,8 @@ import {
   Pressable,
   ScrollView,
   Switch,
+  Modal,
+  Platform,
   useWindowDimensions,
   Alert,
   ActivityIndicator,
@@ -15,7 +17,7 @@ import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { clearToken } from "../../lib/token";
 import { router } from "expo-router";
-import { apiGet, apiPatch } from "../../lib/api";
+import { apiGet, apiPatch, apiPost } from "../../lib/api";
 import { colors, card, page } from "../../lib/theme";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -64,6 +66,7 @@ function Field({
   keyboardType,
   helper,
   half,
+  icon,
 }: {
   label: string;
   value: string;
@@ -73,20 +76,24 @@ function Field({
   keyboardType?: "default" | "email-address" | "phone-pad";
   helper?: string;
   half?: boolean;
+  icon?: string;
 }) {
   return (
     <View style={[ss.field, half && ss.fieldHalf]}>
       <Text style={ss.fieldLabel}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={colors.muted}
-        secureTextEntry={secure}
-        keyboardType={keyboardType}
-        style={ss.input}
-        autoCapitalize="none"
-      />
+      <View style={ss.inputRow}>
+        {icon ? <Ionicons name={icon as any} size={16} color={colors.muted} style={{ marginRight: 10 }} /> : null}
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={colors.muted}
+          secureTextEntry={secure}
+          keyboardType={keyboardType}
+          style={ss.input}
+          autoCapitalize="none"
+        />
+      </View>
       {helper ? <Text style={ss.helper}>{helper}</Text> : null}
     </View>
   );
@@ -136,7 +143,16 @@ export default function SettingsScreen() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail]       = useState("");
   const [mobile, setMobile]     = useState("");
-  const [newPassword, setNewPassword] = useState("");
+
+  // ── Password modal
+  const [pwdModalOpen, setPwdModalOpen]       = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword]         = useState("");
+  const [confirmNewPwd, setConfirmNewPwd]     = useState("");
+  const [pwdLoading, setPwdLoading]           = useState(false);
+  const [showCurrent, setShowCurrent]         = useState(false);
+  const [showNew, setShowNew]                 = useState(false);
+  const [showConfirm, setShowConfirm]         = useState(false);
 
   // ── Prefs
   const [language, setLanguage] = useState<"English" | "Arabic">("English");
@@ -205,12 +221,56 @@ export default function SettingsScreen() {
         },
       });
       Alert.alert("Saved", "Your settings have been saved.");
-      setNewPassword("");
     } catch (e: any) {
       Alert.alert("Save Failed", e?.message || "Could not save settings");
     } finally {
       setSaving(false);
     }
+  }
+
+  // ── Change password
+  async function onChangePassword() {
+    if (!currentPassword) {
+      Alert.alert("Required", "Please enter your current password.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert("Too short", "New password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmNewPwd) {
+      Alert.alert("Mismatch", "New passwords do not match.");
+      return;
+    }
+    if (newPassword === currentPassword) {
+      Alert.alert("Same password", "New password must be different from your current one.");
+      return;
+    }
+
+    try {
+      setPwdLoading(true);
+      await apiPost("/auth/change-password", {
+        current_password: currentPassword,
+        new_password:     newPassword,
+        confirm_password: confirmNewPwd,
+      });
+      closePwdModal();
+      Alert.alert("Password changed", "Your password has been updated successfully.");
+    } catch (e: any) {
+      Alert.alert("Failed", e?.message || "Could not change password. Check your current password.");
+    } finally {
+      setPwdLoading(false);
+    }
+  }
+
+  function closePwdModal() {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmNewPwd("");
+    setShowCurrent(false);
+    setShowNew(false);
+    setShowConfirm(false);
+    setPwdModalOpen(false);
   }
 
   // ── Logout
@@ -247,250 +307,374 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView
-      style={page.base}
-      contentContainerStyle={[page.content, { paddingTop: 16 }]}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <View>
-        <Text style={ss.h1}>Settings</Text>
-        <Text style={ss.h2}>Manage your account and preferences</Text>
-      </View>
-
-      {/* ── Profile ──────────────────────────────────────────────────────── */}
-      <View style={[card.base, ss.section]}>
-        <AccordionRow
-          icon="person-circle-outline"
-          title="Profile Settings"
-          isOpen={open.profile}
-          onToggle={() => toggle("profile")}
-        />
-
-        {open.profile && (
-          <View style={ss.sectionBody}>
-            {/* Avatar */}
-            <View style={ss.avatarRow}>
-              <View style={ss.avatar}>
-                <Text style={ss.avatarText}>{avatarInitials}</Text>
-              </View>
-              <View>
-                <Text style={ss.avatarName}>{fullName || "—"}</Text>
-                <Text style={ss.avatarEmail}>{email}</Text>
-              </View>
-            </View>
-
-            {/* Form */}
-            <View style={[ss.formGrid, twoCol && ss.formTwo]}>
-              <Field
-                label="Full Name"
-                value={fullName}
-                onChange={setFullName}
-                half={twoCol}
-              />
-              <Field
-                label="Email Address"
-                value={email}
-                onChange={setEmail}
-                keyboardType="email-address"
-                half={twoCol}
-              />
-              <Field
-                label="Mobile Number"
-                value={mobile}
-                onChange={setMobile}
-                keyboardType="phone-pad"
-                placeholder="+971 50 000 0000"
-                half={twoCol}
-              />
-              <Field
-                label="New Password"
-                value={newPassword}
-                onChange={setNewPassword}
-                secure
-                placeholder="Leave blank to keep current"
-                helper="Password changes are not yet supported by the backend."
-                half={twoCol}
-              />
-            </View>
-
-            {/* Language + timezone */}
-            <View style={[ss.formGrid, twoCol && ss.formTwo]}>
-              <View style={[ss.field, twoCol && ss.fieldHalf]}>
-                <Text style={ss.fieldLabel}>Language</Text>
-                <Pressable
-                  onPress={() => setLanguage((v) => v === "English" ? "Arabic" : "English")}
-                  style={ss.select}
-                >
-                  <Text style={ss.selectText}>{language}</Text>
-                  <Ionicons name="chevron-down" size={14} color={colors.subtext} />
-                </Pressable>
-              </View>
-
-              <View style={[ss.field, twoCol && ss.fieldHalf]}>
-                <Text style={ss.fieldLabel}>Time Zone</Text>
-                <Pressable
-                  onPress={() => setTimeZone((v) =>
-                    v === "Gulf Standard Time (GST)" ? "Eastern Time (ET)" : "Gulf Standard Time (GST)"
-                  )}
-                  style={ss.select}
-                >
-                  <Text style={ss.selectText} numberOfLines={1}>{timeZone}</Text>
-                  <Ionicons name="chevron-down" size={14} color={colors.subtext} />
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Save */}
-            <View style={ss.saveRow}>
-              <Pressable
-                onPress={saveProfile}
-                disabled={!canSave || saving}
-                style={({ pressed }) => [
-                  ss.saveBtn,
-                  (!canSave || saving) && { opacity: 0.5 },
-                  pressed && canSave && { transform: [{ scale: 0.98 }] },
-                ]}
-              >
-                {saving
-                  ? <ActivityIndicator size="small" color="#FFFFFF" />
-                  : <Text style={ss.saveBtnText}>Save Settings</Text>
-                }
-              </Pressable>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* ── Notifications ────────────────────────────────────────────────── */}
-      <View style={[card.base, ss.section]}>
-        <AccordionRow
-          icon="notifications-outline"
-          title="Notification Preferences"
-          isOpen={open.notifications}
-          onToggle={() => toggle("notifications")}
-        />
-
-        {open.notifications && (
-          <View style={ss.sectionBody}>
-            <ToggleRow
-              label="New Booking"
-              sub="Alert when a student books one of your time slots"
-              value={notifyBooking}
-              onChange={setNotifyBooking}
-            />
-            <View style={ss.rowDivider} />
-            <ToggleRow
-              label="Session Reminder"
-              sub="Reminder 30 minutes before a scheduled session"
-              value={notifyReminder}
-              onChange={setNotifyReminder}
-            />
-            <View style={ss.rowDivider} />
-            <ToggleRow
-              label="Report Ready"
-              sub="Alert when a student views their generated report"
-              value={notifyReport}
-              onChange={setNotifyReport}
-            />
-
-            <View style={ss.saveRow}>
-              <Pressable
-                onPress={saveProfile}
-                disabled={saving}
-                style={({ pressed }) => [
-                  ss.saveBtn,
-                  saving && { opacity: 0.5 },
-                  pressed && { transform: [{ scale: 0.98 }] },
-                ]}
-              >
-                {saving
-                  ? <ActivityIndicator size="small" color="#FFFFFF" />
-                  : <Text style={ss.saveBtnText}>Save Preferences</Text>
-                }
-              </Pressable>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* ── Availability ─────────────────────────────────────────────────── */}
-      <View style={[card.base, ss.section]}>
-        <AccordionRow
-          icon="calendar-outline"
-          title="Calendar & Availability"
-          isOpen={open.availability}
-          onToggle={() => toggle("availability")}
-        />
-
-        {open.availability && (
-          <View style={ss.sectionBody}>
-            <View style={ss.infoBox}>
-              <Ionicons name="information-circle-outline" size={18} color={colors.purpleDark} />
-              <Text style={ss.infoText}>
-                Manage your available time slots so students can book sessions with you.
-                Add new slots from the Sessions page, or contact your administrator
-                if you need help adjusting your schedule.
-              </Text>
-            </View>
-
-            <Pressable
-              onPress={() => router.push("/(instructortabs)/sessions" as any)}
-              style={({ pressed }) => [ss.linkBtn, pressed && { opacity: 0.85 }]}
-            >
-              <Ionicons name="calendar-outline" size={16} color={colors.purpleDark} />
-              <Text style={ss.linkBtnText}>Manage Availability in Sessions</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.purpleDark} />
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      {/* ── Security ─────────────────────────────────────────────────────── */}
-      <View style={[card.base, ss.section]}>
-        <AccordionRow
-          icon="shield-checkmark-outline"
-          title="Security & Account"
-          isOpen={open.security}
-          onToggle={() => toggle("security")}
-        />
-
-        {open.security && (
-          <View style={ss.sectionBody}>
-            <View style={ss.infoBox}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.subtext} />
-              <Text style={ss.infoText}>
-                Your account is secured with a hashed password. To change your password, use
-                the Profile Settings section above. Two-factor authentication and session
-                history will be available in a future update.
-              </Text>
-            </View>
-
-            <View style={ss.metaRow}>
-              <Text style={ss.metaLabel}>Signed in as</Text>
-              <Text style={ss.metaValue}>{email || "—"}</Text>
-            </View>
-            <View style={ss.metaRow}>
-              <Text style={ss.metaLabel}>Role</Text>
-              <Text style={ss.metaValue}>Instructor</Text>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* ── Logout ───────────────────────────────────────────────────────── */}
-      <Pressable
-        onPress={handleLogout}
-        style={({ pressed }) => [ss.logoutBtn, pressed && { opacity: 0.85 }]}
+    <>
+      <ScrollView
+        style={page.base}
+        contentContainerStyle={[page.content, { paddingTop: 16 }]}
+        showsVerticalScrollIndicator={false}
       >
-        <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
-        <Text style={ss.logoutText}>Log Out</Text>
-      </Pressable>
+        {/* Header */}
+        <View>
+          <Text style={ss.h1}>Settings</Text>
+          <Text style={ss.h2}>Manage your account and preferences</Text>
+        </View>
 
-      <Text style={ss.footer}>© 2025 DriveIQ · Authorized instructor use only</Text>
+        {/* ── Profile ──────────────────────────────────────────────────────── */}
+        <View style={[card.base, ss.section]}>
+          <AccordionRow
+            icon="person-circle-outline"
+            title="Profile Settings"
+            isOpen={open.profile}
+            onToggle={() => toggle("profile")}
+          />
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+          {open.profile && (
+            <View style={ss.sectionBody}>
+              {/* Avatar */}
+              <View style={ss.avatarRow}>
+                <View style={ss.avatar}>
+                  <Text style={ss.avatarText}>{avatarInitials}</Text>
+                </View>
+                <View>
+                  <Text style={ss.avatarName}>{fullName || "—"}</Text>
+                  <Text style={ss.avatarEmail}>{email}</Text>
+                </View>
+              </View>
+
+              {/* Form */}
+              <View style={[ss.formGrid, twoCol && ss.formTwo]}>
+                <Field
+                  label="Full Name"
+                  value={fullName}
+                  onChange={setFullName}
+                  icon="person-outline"
+                  half={twoCol}
+                />
+                <Field
+                  label="Email Address"
+                  value={email}
+                  onChange={setEmail}
+                  keyboardType="email-address"
+                  icon="mail-outline"
+                  half={twoCol}
+                />
+                <Field
+                  label="Mobile Number"
+                  value={mobile}
+                  onChange={setMobile}
+                  keyboardType="phone-pad"
+                  placeholder="+971 50 000 0000"
+                  icon="call-outline"
+                  half={twoCol}
+                />
+
+                {/* Password row */}
+                <View style={[ss.field, twoCol && ss.fieldHalf]}>
+                  <Text style={ss.fieldLabel}>Password</Text>
+                  <View style={ss.passwordRow}>
+                    <View style={[ss.inputRow, { flex: 1 }]}>
+                      <Ionicons name="lock-closed-outline" size={16} color={colors.muted} style={{ marginRight: 10 }} />
+                      <TextInput
+                        value="••••••••"
+                        editable={false}
+                        style={ss.input}
+                      />
+                    </View>
+                    <Pressable
+                      style={({ pressed }) => [ss.changePwdBtn, pressed && { opacity: 0.85 }]}
+                      onPress={() => setPwdModalOpen(true)}
+                    >
+                      <Ionicons name="lock-closed-outline" size={14} color={colors.text} />
+                      <Text style={ss.changePwdText}>Change</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+
+              {/* Language + timezone */}
+              <View style={[ss.formGrid, twoCol && ss.formTwo, { marginTop: 12 }]}>
+                <View style={[ss.field, twoCol && ss.fieldHalf]}>
+                  <Text style={ss.fieldLabel}>Language</Text>
+                  <Pressable
+                    onPress={() => setLanguage((v) => v === "English" ? "Arabic" : "English")}
+                    style={ss.select}
+                  >
+                    <Text style={ss.selectText}>{language}</Text>
+                    <Ionicons name="chevron-down" size={14} color={colors.subtext} />
+                  </Pressable>
+                </View>
+
+                <View style={[ss.field, twoCol && ss.fieldHalf]}>
+                  <Text style={ss.fieldLabel}>Time Zone</Text>
+                  <Pressable
+                    onPress={() => setTimeZone((v) =>
+                      v === "Gulf Standard Time (GST)" ? "Eastern Time (ET)" : "Gulf Standard Time (GST)"
+                    )}
+                    style={ss.select}
+                  >
+                    <Text style={ss.selectText} numberOfLines={1}>{timeZone}</Text>
+                    <Ionicons name="chevron-down" size={14} color={colors.subtext} />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Save */}
+              <View style={ss.saveRow}>
+                <Pressable
+                  onPress={saveProfile}
+                  disabled={!canSave || saving}
+                  style={({ pressed }) => [
+                    ss.saveBtn,
+                    (!canSave || saving) && { opacity: 0.5 },
+                    pressed && canSave && { transform: [{ scale: 0.98 }] },
+                  ]}
+                >
+                  {saving
+                    ? <ActivityIndicator size="small" color="#FFFFFF" />
+                    : <Text style={ss.saveBtnText}>Save Settings</Text>
+                  }
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* ── Notifications ────────────────────────────────────────────────── */}
+        <View style={[card.base, ss.section]}>
+          <AccordionRow
+            icon="notifications-outline"
+            title="Notification Preferences"
+            isOpen={open.notifications}
+            onToggle={() => toggle("notifications")}
+          />
+
+          {open.notifications && (
+            <View style={ss.sectionBody}>
+              <ToggleRow
+                label="New Booking"
+                sub="Alert when a student books one of your time slots"
+                value={notifyBooking}
+                onChange={setNotifyBooking}
+              />
+              <View style={ss.rowDivider} />
+              <ToggleRow
+                label="Session Reminder"
+                sub="Reminder 30 minutes before a scheduled session"
+                value={notifyReminder}
+                onChange={setNotifyReminder}
+              />
+              <View style={ss.rowDivider} />
+              <ToggleRow
+                label="Report Ready"
+                sub="Alert when a student views their generated report"
+                value={notifyReport}
+                onChange={setNotifyReport}
+              />
+
+              <View style={ss.saveRow}>
+                <Pressable
+                  onPress={saveProfile}
+                  disabled={saving}
+                  style={({ pressed }) => [
+                    ss.saveBtn,
+                    saving && { opacity: 0.5 },
+                    pressed && { transform: [{ scale: 0.98 }] },
+                  ]}
+                >
+                  {saving
+                    ? <ActivityIndicator size="small" color="#FFFFFF" />
+                    : <Text style={ss.saveBtnText}>Save Preferences</Text>
+                  }
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* ── Availability ─────────────────────────────────────────────────── */}
+        <View style={[card.base, ss.section]}>
+          <AccordionRow
+            icon="calendar-outline"
+            title="Calendar & Availability"
+            isOpen={open.availability}
+            onToggle={() => toggle("availability")}
+          />
+
+          {open.availability && (
+            <View style={ss.sectionBody}>
+              <View style={ss.infoBox}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.purpleDark} />
+                <Text style={ss.infoText}>
+                  Manage your available time slots so students can book sessions with you.
+                  Add new slots from the Sessions page, or contact your administrator
+                  if you need help adjusting your schedule.
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={() => router.push("/(instructortabs)/sessions" as any)}
+                style={({ pressed }) => [ss.linkBtn, pressed && { opacity: 0.85 }]}
+              >
+                <Ionicons name="calendar-outline" size={16} color={colors.purpleDark} />
+                <Text style={ss.linkBtnText}>Manage Availability in Sessions</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.purpleDark} />
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        {/* ── Security ─────────────────────────────────────────────────────── */}
+        <View style={[card.base, ss.section]}>
+          <AccordionRow
+            icon="shield-checkmark-outline"
+            title="Security & Account"
+            isOpen={open.security}
+            onToggle={() => toggle("security")}
+          />
+
+          {open.security && (
+            <View style={ss.sectionBody}>
+              <View style={ss.infoBox}>
+                <Ionicons name="lock-closed-outline" size={18} color={colors.subtext} />
+                <Text style={ss.infoText}>
+                  Your account is secured with a hashed password. Two-factor authentication
+                  and session history will be available in a future update.
+                </Text>
+              </View>
+
+              <View style={ss.metaRow}>
+                <Text style={ss.metaLabel}>Signed in as</Text>
+                <Text style={ss.metaValue}>{email || "—"}</Text>
+              </View>
+              <View style={ss.metaRow}>
+                <Text style={ss.metaLabel}>Role</Text>
+                <Text style={ss.metaValue}>Instructor</Text>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* ── Logout ───────────────────────────────────────────────────────── */}
+        <Pressable
+          onPress={handleLogout}
+          style={({ pressed }) => [ss.logoutBtn, pressed && { opacity: 0.85 }]}
+        >
+          <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
+          <Text style={ss.logoutText}>Log Out</Text>
+        </Pressable>
+
+        <Text style={ss.footer}>© 2025 DriveIQ · Authorized instructor use only</Text>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+
+      {/* ── Change Password Modal ──────────────────────────────────────── */}
+      <Modal visible={pwdModalOpen} transparent animationType="fade" onRequestClose={closePwdModal}>
+        <Pressable style={ss.modalOverlay} onPress={closePwdModal}>
+          <Pressable style={ss.modalCard} onPress={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <View style={ss.modalHeader}>
+              <View style={ss.modalIconWrap}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.purpleDark} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={ss.modalTitle}>Change Password</Text>
+                <Text style={ss.modalSub}>Enter your current password to continue</Text>
+              </View>
+              <Pressable onPress={closePwdModal} hitSlop={8}>
+                <Ionicons name="close" size={20} color={colors.subtext} />
+              </Pressable>
+            </View>
+
+            <View style={ss.modalDivider} />
+
+            {/* Current password */}
+            <Text style={ss.modalLabel}>Current Password</Text>
+            <View style={ss.modalInputRow}>
+              <Ionicons name="lock-closed-outline" size={16} color={colors.muted} style={{ marginRight: 10 }} />
+              <TextInput
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                placeholder="Enter your current password"
+                placeholderTextColor={colors.muted}
+                secureTextEntry={!showCurrent}
+                style={ss.modalInput}
+              />
+              <Pressable onPress={() => setShowCurrent((v) => !v)} hitSlop={8}>
+                <Ionicons name={showCurrent ? "eye-off-outline" : "eye-outline"} size={16} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            {/* New password */}
+            <Text style={[ss.modalLabel, { marginTop: 14 }]}>New Password</Text>
+            <View style={ss.modalInputRow}>
+              <Ionicons name="key-outline" size={16} color={colors.muted} style={{ marginRight: 10 }} />
+              <TextInput
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="Min 6 characters"
+                placeholderTextColor={colors.muted}
+                secureTextEntry={!showNew}
+                style={ss.modalInput}
+              />
+              <Pressable onPress={() => setShowNew((v) => !v)} hitSlop={8}>
+                <Ionicons name={showNew ? "eye-off-outline" : "eye-outline"} size={16} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            {newPassword.length > 0 && newPassword.length < 6 && (
+              <Text style={ss.modalError}>Must be at least 6 characters</Text>
+            )}
+
+            {/* Confirm new password */}
+            <Text style={[ss.modalLabel, { marginTop: 14 }]}>Confirm New Password</Text>
+            <View style={ss.modalInputRow}>
+              <Ionicons name="key-outline" size={16} color={colors.muted} style={{ marginRight: 10 }} />
+              <TextInput
+                value={confirmNewPwd}
+                onChangeText={setConfirmNewPwd}
+                placeholder="Repeat new password"
+                placeholderTextColor={colors.muted}
+                secureTextEntry={!showConfirm}
+                style={ss.modalInput}
+              />
+              <Pressable onPress={() => setShowConfirm((v) => !v)} hitSlop={8}>
+                <Ionicons name={showConfirm ? "eye-off-outline" : "eye-outline"} size={16} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            {confirmNewPwd.length > 0 && newPassword !== confirmNewPwd && (
+              <Text style={ss.modalError}>Passwords do not match</Text>
+            )}
+
+            {newPassword.length >= 6 && newPassword === confirmNewPwd && (
+              <View style={ss.modalSuccessRow}>
+                <Ionicons name="checkmark-circle" size={14} color={colors.green} />
+                <Text style={ss.modalSuccess}>Passwords match and meet requirements</Text>
+              </View>
+            )}
+
+            {/* Buttons */}
+            <View style={ss.modalBtns}>
+              <Pressable style={ss.modalCancelBtn} onPress={closePwdModal}>
+                <Text style={ss.modalCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[ss.modalSaveBtn, pwdLoading && { opacity: 0.6 }]}
+                onPress={onChangePassword}
+                disabled={pwdLoading}
+              >
+                {pwdLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={ss.modalSaveText}>Update Password</Text>
+                }
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -549,19 +733,45 @@ const ss = StyleSheet.create({
   field: { gap: 6 },
   fieldHalf: { width: "48%" },
   fieldLabel: { fontSize: 12, fontWeight: "800", color: colors.text },
-  input: {
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.inputBg,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
+  },
+  input: {
+    flex: 1,
     fontSize: 13,
     fontWeight: "600",
     color: colors.text,
+    padding: 0,
   },
   helper: { fontSize: 11, fontWeight: "600", color: colors.muted },
 
+  // ── Password row
+  passwordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  changePwdBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.cardBg,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  changePwdText: { fontSize: 12, fontWeight: "900", color: colors.text },
+
+  // ── Select
   select: {
     flexDirection: "row",
     alignItems: "center",
@@ -667,4 +877,73 @@ const ss = StyleSheet.create({
     color: colors.muted,
     textAlign: "center",
   },
+
+  // ── Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: colors.cardBg,
+    borderRadius: 16,
+    padding: 20,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 8 } },
+      android: { elevation: 12 },
+    }),
+  },
+  modalHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 },
+  modalIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: colors.purpleLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalTitle: { fontSize: 15, fontWeight: "900", color: colors.text },
+  modalSub: { fontSize: 12, fontWeight: "700", color: colors.subtext, marginTop: 2 },
+
+  modalDivider: { height: 1, backgroundColor: colors.border, marginVertical: 14 },
+
+  modalLabel: { fontSize: 12, fontWeight: "900", color: colors.text, marginBottom: 8 },
+  modalInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  modalInput: { flex: 1, color: colors.text, fontWeight: "800", fontSize: 13, padding: 0 },
+
+  modalError: { marginTop: 6, color: colors.red, fontWeight: "700", fontSize: 11 },
+  modalSuccessRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  modalSuccess: { color: colors.green, fontWeight: "700", fontSize: 12 },
+
+  modalBtns: { flexDirection: "row", gap: 10, marginTop: 20 },
+  modalCancelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalCancelText: { color: colors.text, fontWeight: "900", fontSize: 13 },
+  modalSaveBtn: {
+    flex: 1,
+    backgroundColor: colors.darkBtn,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalSaveText: { color: "#FFFFFF", fontWeight: "900", fontSize: 13 },
 });

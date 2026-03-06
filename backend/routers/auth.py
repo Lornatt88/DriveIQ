@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth import create_access_token, hash_password, verify_password
 from app.database import institute_codes_col, instructor_profiles_col, users_col
-from app.models import LoginRequest, RegisterRequest, TokenResponse, UserPublic
+from app.models import ChangePasswordRequest, LoginRequest, RegisterRequest, TokenResponse, UserPublic
 from app.permissions import get_current_user
 from app.utils import now_utc, to_jsonable
 
@@ -142,6 +142,30 @@ def login(body: LoginRequest):
             instructor_id=user.get("instructor_id"),
         ),
     )
+
+
+@router.post("/auth/change-password")
+def change_password(body: ChangePasswordRequest, current_user=Depends(get_current_user)):
+    if body.new_password != body.confirm_password:
+        raise HTTPException(status_code=400, detail="New passwords do not match")
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    if body.new_password == body.current_password:
+        raise HTTPException(status_code=400, detail="New password must differ from current password")
+
+    # Re-fetch user WITH password_hash (get_current_user strips it)
+    user = users_col.find_one({"user_id": current_user["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(body.current_password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+    users_col.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"password_hash": hash_password(body.new_password)}},
+    )
+    return {"status": "ok", "message": "Password changed successfully"}
 
 
 @router.get("/auth/me")

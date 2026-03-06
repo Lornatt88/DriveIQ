@@ -56,7 +56,7 @@ function fmtDate(iso?: string) {
 
 function fmtTime(iso?: string) {
   if (!iso) return "—";
-  try { return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
+  try { return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }); }
   catch { return "—"; }
 }
 

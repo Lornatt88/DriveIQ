@@ -8,14 +8,10 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  Platform,
   Modal,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { apiGet, apiPost, apiPatch } from "../../lib/api";
-
-import { Picker } from "@react-native-picker/picker";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 type SessionStatus = "scheduled" | "active" | "completed" | "cancelled" | "confirmed";
 
@@ -68,7 +64,7 @@ function formatDate(ms: number) {
 
 function formatTime(ms: number) {
   if (!ms) return "—";
-  return new Date(ms).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 function initials(name?: string, id?: string) {
@@ -81,17 +77,6 @@ function initials(name?: string, id?: string) {
 
 function labelLearner(l: Learner) {
   return l.name?.trim() || l.email?.trim() || l.user_id;
-}
-
-function setDatePart(base: Date, date: Date) {
-  const d = new Date(base);
-  d.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-  return d;
-}
-function setTimePart(base: Date, time: Date) {
-  const d = new Date(base);
-  d.setHours(time.getHours(), time.getMinutes(), 0, 0);
-  return d;
 }
 
 function pillFor(status: SessionStatus) {
@@ -143,29 +128,12 @@ export default function SessionsScreen() {
   }, []);
 
   const [loading, setLoading] = useState(true);
-  const [learnersLoading, setLearnersLoading] = useState(true);
 
   const [learners, setLearners] = useState<Learner[]>([]);
   const [sessions, setSessions] = useState<SessionDoc[]>([]);
 
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [query, setQuery] = useState("");
-
-  // create session fields
-  const [selectedLearnerId, setSelectedLearnerId] = useState("");
-  const [vehicleId, setVehicleId] = useState("VEH-0001");
-  const [durationMin, setDurationMin] = useState("60");
-  const [notes, setNotes] = useState("");
-
-  // date/time picker
-  const [scheduledDateTime, setScheduledDateTime] = useState<Date>(() => {
-    const d = new Date();
-    d.setMinutes(d.getMinutes() + 30);
-    d.setSeconds(0, 0);
-    return d;
-  });
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // analysis panel
   const [selectedReport, setSelectedReport] = useState<ReportResponse | null>(null);
@@ -180,6 +148,9 @@ export default function SessionsScreen() {
   const [postEndModal, setPostEndModal] = useState<{ sessionId: string; traineeName: string } | null>(null);
   const [instructorNotes, setInstructorNotes] = useState("");
   const [generating, setGenerating] = useState(false);
+
+  // detail modal
+  const [detailSession, setDetailSession] = useState<SessionDoc | null>(null);
 
   // edit notes in analysis panel
   const [editingNotes, setEditingNotes] = useState(false);
@@ -222,7 +193,7 @@ export default function SessionsScreen() {
 
     try {
       if (!isMountedRef.current) return;
-      setLearnersLoading(true);
+
       setLastAction("Loading trainees…");
 
       const data = await apiGet("/instructor/learners");
@@ -230,8 +201,6 @@ export default function SessionsScreen() {
 
       const arr: Learner[] = Array.isArray(data) ? data : [];
       setLearners(arr);
-
-      if (!selectedLearnerId && arr.length > 0) setSelectedLearnerId(arr[0].user_id);
 
       setLastAction("Trainees loaded ✅");
     } catch (e: any) {
@@ -242,7 +211,7 @@ export default function SessionsScreen() {
       Alert.alert("Learners", msg);
     } finally {
       if (!isMountedRef.current) return;
-      setLearnersLoading(false);
+
       loadLearnersInFlight.current = false;
     }
   };
@@ -281,36 +250,6 @@ export default function SessionsScreen() {
       return () => {};
     }, [])
   );
-
-  const createSession = async () => {
-    if (!selectedLearnerId) return Alert.alert("Pick trainee", "No linked trainee found.");
-    const dur = Number(durationMin);
-    if (!Number.isFinite(dur) || dur <= 0) return Alert.alert("Duration", "Enter a valid duration.");
-    if (!vehicleId.trim()) return Alert.alert("Vehicle", "Enter vehicle ID.");
-
-    try {
-      setLastAction("Creating session…");
-      await apiPost("/sessions", {
-        trainee_id: selectedLearnerId,
-        vehicle_id: vehicleId.trim(),
-        scheduled_at: scheduledDateTime.toISOString(),
-        duration_min: dur,
-        notes: notes.trim() || "",
-        road_type: "secondary",
-      });
-
-      if (!isMountedRef.current) return;
-      setNotes("");
-      setLastAction("Session created ✅");
-      Alert.alert("✅ Scheduled", "Session created.");
-      await loadSessions();
-    } catch (e: any) {
-      if (!isMountedRef.current) return;
-      const msg = friendlyError(e);
-      setLastAction(`Create failed ❌ ${msg}`);
-      Alert.alert("Create", msg);
-    }
-  };
 
   // Show a road type picker before starting
   const promptRoadType = (id: string) => {
@@ -494,9 +433,7 @@ export default function SessionsScreen() {
       const match =
         !q ||
         name.toLowerCase().includes(q) ||
-        (s.session_id || "").toLowerCase().includes(q) ||
-        (s.booking_id || "").toLowerCase().includes(q) ||
-        (s.vehicle_id || "").toLowerCase().includes(q);
+        (s.status || "").toLowerCase().includes(q);
 
       return match;
     });
@@ -509,144 +446,49 @@ export default function SessionsScreen() {
     return list;
   }, [sessions, tab, query, learnerMap]);
 
-  const onDatePicked = (e: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS !== "ios") setShowDatePicker(false);
-    if (e.type === "dismissed" || !date) return;
-    setScheduledDateTime((prev) => setDatePart(prev, date));
-  };
-
-  const onTimePicked = (e: DateTimePickerEvent, time?: Date) => {
-    if (Platform.OS !== "ios") setShowTimePicker(false);
-    if (e.type === "dismissed" || !time) return;
-    setScheduledDateTime((prev) => setTimePart(prev, time));
-  };
-
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
       <Text style={styles.h1}>Sessions</Text>
-      <Text style={styles.h2}>Schedule sessions, run them, then view the session analysis.</Text>
+      <Text style={styles.h2}>Manage booked sessions, run them, then view the session analysis.</Text>
 
       {/* Live session */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Live Session</Text>
         {!activeSession ? (
           <Text style={styles.muted}>No active session</Text>
-        ) : (
-          <View style={{ marginTop: 10 }}>
-            <View style={styles.liveRow}>
-              <Text style={styles.liveLabel}>Active session:</Text>
-              <Text style={styles.liveId} numberOfLines={1}>
-                {activeSession.session_id || activeSession.booking_id}
-              </Text>
-            </View>
+        ) : (() => {
+          const activeLearner = learnerMap.get(activeSession.trainee_id);
+          const activeName = activeLearner ? labelLearner(activeLearner) : (activeSession.trainee_name || "Student");
+          return (
+            <View style={{ marginTop: 10 }}>
+              <View style={styles.liveRow}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initials(activeName)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.studentName}>{activeName}</Text>
+                  <Text style={styles.mutedSmall}>
+                    {(activeSession as any).road_type || "Secondary"} road
+                  </Text>
+                </View>
+              </View>
 
-            <Text style={styles.timer}>⏱ {msToClock(activeElapsed)}</Text>
-            <Text style={styles.mutedSmall}>Timer starts only after you press "Start".</Text>
-
-            <Pressable
-              disabled={!!endingId || !activeSession.session_id}
-              onPress={() => activeSession.session_id && endSession(activeSession.session_id)}
-              style={({ pressed }) => [
-                styles.endBtn,
-                !!endingId ? { opacity: 0.6 } : null,
-                pressed ? { opacity: 0.9 } : null,
-              ]}
-            >
-              <Text style={styles.endBtnText}>{endingId ? "Ending…" : "End Session"}</Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      {/* Create Session */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Create Session</Text>
-        <Text style={styles.muted}>Pick a linked trainee and schedule a session.</Text>
-
-        {learnersLoading ? (
-          <View style={{ marginTop: 10 }}>
-            <ActivityIndicator />
-            <Text style={styles.muted}>Loading trainees…</Text>
-          </View>
-        ) : learners.length === 0 ? (
-          <View style={{ marginTop: 10 }}>
-            <Text style={styles.warnTitle}>No linked trainees yet</Text>
-            <Text style={styles.muted}>Trainees are linked when they book a session with you. Once booked, they will appear here.</Text>
-          </View>
-        ) : (
-          <View style={{ marginTop: 12, gap: 10 }}>
-            <View style={styles.pickerWrap}>
-              <Picker selectedValue={selectedLearnerId} onValueChange={(val) => setSelectedLearnerId(String(val))}>
-                {learners.map((l) => (
-                  <Picker.Item key={l.user_id} label={labelLearner(l)} value={l.user_id} />
-                ))}
-              </Picker>
-            </View>
-
-            <TextInput
-              value={vehicleId}
-              onChangeText={setVehicleId}
-              placeholder="Vehicle ID (ex: VEH-0001)"
-              placeholderTextColor="#98A2B3"
-              style={styles.input}
-            />
-
-            <View style={styles.dtRow}>
-              <Pressable
-                onPress={() => setShowDatePicker(true)}
-                style={({ pressed }) => [styles.dtBtn, pressed ? { opacity: 0.9 } : null]}
-              >
-                <Text style={styles.dtBtnText}>📅 {formatDate(scheduledDateTime.getTime())}</Text>
-              </Pressable>
+              <Text style={styles.timer}>{msToClock(activeElapsed)}</Text>
 
               <Pressable
-                onPress={() => setShowTimePicker(true)}
-                style={({ pressed }) => [styles.dtBtn, pressed ? { opacity: 0.9 } : null]}
+                disabled={!!endingId || !activeSession.session_id}
+                onPress={() => activeSession.session_id && endSession(activeSession.session_id)}
+                style={({ pressed }) => [
+                  styles.endBtn,
+                  !!endingId ? { opacity: 0.6 } : null,
+                  pressed ? { opacity: 0.9 } : null,
+                ]}
               >
-                <Text style={styles.dtBtnText}>🕒 {formatTime(scheduledDateTime.getTime())}</Text>
+                <Text style={styles.endBtnText}>{endingId ? "Ending…" : "End Session"}</Text>
               </Pressable>
             </View>
-
-            {showDatePicker ? (
-              <DateTimePicker
-                value={scheduledDateTime}
-                mode="date"
-                display={Platform.OS === "ios" ? "inline" : "default"}
-                onChange={onDatePicked}
-              />
-            ) : null}
-
-            {showTimePicker ? (
-              <DateTimePicker
-                value={scheduledDateTime}
-                mode="time"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={onTimePicked}
-              />
-            ) : null}
-
-            <TextInput
-              value={durationMin}
-              onChangeText={setDurationMin}
-              keyboardType="numeric"
-              placeholder="Duration minutes (ex: 60)"
-              placeholderTextColor="#98A2B3"
-              style={styles.input}
-            />
-
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Notes (optional)"
-              placeholderTextColor="#98A2B3"
-              style={styles.input}
-            />
-
-            <Pressable onPress={createSession} style={({ pressed }) => [styles.primaryBtn, pressed ? { opacity: 0.9 } : null]}>
-              <Text style={styles.primaryBtnText}>Create Session</Text>
-            </Pressable>
-          </View>
-        )}
+          );
+        })()}
       </View>
 
       {/* Tabs */}
@@ -666,7 +508,7 @@ export default function SessionsScreen() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search trainee, session, vehicle…"
+            placeholder="Search by trainee name…"
             placeholderTextColor="#98A2B3"
             style={styles.searchInput}
           />
@@ -707,13 +549,14 @@ export default function SessionsScreen() {
             const schedMs = safeParseMs(s.scheduled_at);
             const rowKey = s.session_id || s.booking_id || s.trainee_id;
 
-            const isEndingThis = endingId === s.session_id;
-            const isGeneratingThis = generatingId === s.session_id;
             const isConfirmed = s.status === "confirmed";
-            const canStart = (s.status === "scheduled" || s.status === "confirmed") && !endingId && !generatingId;
 
             return (
-              <View key={rowKey} style={styles.sessionRow}>
+              <Pressable
+                key={rowKey}
+                onPress={() => setDetailSession(s)}
+                style={({ pressed }) => [styles.sessionRow, pressed && { opacity: 0.85 }]}
+              >
                 <View style={styles.sessionTop}>
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>{initials(learner?.name || s.trainee_name, s.trainee_id)}</Text>
@@ -728,85 +571,14 @@ export default function SessionsScreen() {
                       </View>
                     </View>
                     <Text style={styles.subLine} numberOfLines={1}>
-                      {s.session_id ? `ID: ${s.session_id}` : `Booking: ${s.booking_id}`}
+                      {isConfirmed
+                        ? `Booked · ${formatDate(schedMs)} at ${formatTime(schedMs)}`
+                        : `${(s as any).road_type || "Secondary"} road · ${formatDate(schedMs)} at ${formatTime(schedMs)}`}
                     </Text>
                   </View>
+                  <Text style={styles.chevron}>›</Text>
                 </View>
-
-                <View style={styles.metaRow}>
-                  {isConfirmed ? (
-                    <Meta icon="📋" label="Booking" value={s.booking_id || "—"} />
-                  ) : (
-                    <Meta icon="🚙" label="Vehicle" value={s.vehicle_id || "—"} />
-                  )}
-                  <Meta icon="📅" label="Date" value={formatDate(schedMs)} />
-                  <Meta icon="🕒" label="Time" value={formatTime(schedMs)} />
-                </View>
-
-                <View style={styles.actionsRow}>
-                  <Pressable
-                    disabled={!canStart}
-                    onPress={() => {
-                      if (isConfirmed && s.booking_id) promptRoadType(s.booking_id);
-                      else if (s.session_id) promptRoadType(s.session_id);
-                    }}
-                    style={({ pressed }) => [
-                      styles.actionBtn,
-                      !canStart ? styles.actionBtnDisabled : null,
-                      pressed ? { opacity: 0.9 } : null,
-                    ]}
-                  >
-                    <Text style={styles.actionBtnText}>Start</Text>
-                  </Pressable>
-
-                  {!isConfirmed && (
-                    <Pressable
-                      disabled={s.status !== "active" || !!endingId}
-                      onPress={() => s.session_id && endSession(s.session_id)}
-                      style={({ pressed }) => [
-                        styles.actionBtnEnd,
-                        s.status !== "active" || !!endingId ? styles.actionBtnDisabled : null,
-                        pressed ? { opacity: 0.9 } : null,
-                      ]}
-                    >
-                      <Text style={styles.actionBtnText}>{isEndingThis ? "Ending…" : "End"}</Text>
-                    </Pressable>
-                  )}
-
-                  {!isConfirmed && s.session_id && (
-                    <Pressable
-                      onPress={() => openReport(s.session_id!)}
-                      disabled={!!endingId || !!generatingId}
-                      style={({ pressed }) => [
-                        styles.actionBtnOutline,
-                        (!!endingId || !!generatingId) ? styles.actionBtnDisabled : null,
-                        pressed ? { opacity: 0.9 } : null,
-                      ]}
-                    >
-                      <Text style={styles.actionBtnOutlineText}>
-                        {reportLoading ? "Loading…" : "View analysis"}
-                      </Text>
-                    </Pressable>
-                  )}
-
-                  {s.status === "completed" && s.session_id && (
-                    <Pressable
-                      disabled={!!generatingId || !!endingId}
-                      onPress={() => openGenerateModal(s.session_id!)}
-                      style={({ pressed }) => [
-                        styles.actionBtnGenerate,
-                        (!!generatingId || !!endingId) ? styles.actionBtnDisabled : null,
-                        isGeneratingThis ? { opacity: 0.6 } : null,
-                        pressed ? { opacity: 0.9 } : null,
-                      ]}
-                    >
-                      <Text style={styles.actionBtnText}>
-                        {isGeneratingThis ? "Generating…" : "Generate Report"}
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>
@@ -915,6 +687,134 @@ export default function SessionsScreen() {
         )}
       </View>
 
+      {/* Session Detail Modal */}
+      <Modal
+        visible={!!detailSession}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDetailSession(null)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setDetailSession(null)}
+        >
+          <Pressable style={styles.detailModalCard} onPress={(e) => e.stopPropagation()}>
+            {detailSession && (() => {
+              const ds = detailSession;
+              const learner = learnerMap.get(ds.trainee_id);
+              const name = learner ? labelLearner(learner) : (ds.trainee_name || ds.trainee_id);
+              const p = pillFor(ds.status);
+              const schedMs = safeParseMs(ds.scheduled_at);
+              const isConfirmed = ds.status === "confirmed";
+              const canStart = (ds.status === "scheduled" || ds.status === "confirmed") && !endingId && !generatingId;
+              const isEndingThis = endingId === ds.session_id;
+              const isGeneratingThis = generatingId === ds.session_id;
+
+              return (
+                <>
+                  {/* Header */}
+                  <View style={styles.detailHeader}>
+                    <View style={styles.detailAvatarLg}>
+                      <Text style={styles.detailAvatarText}>{initials(learner?.name || ds.trainee_name, ds.trainee_id)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailName}>{name}</Text>
+                      <View style={[styles.pill, { backgroundColor: p.bg, alignSelf: "flex-start", marginTop: 4 }]}>
+                        <Text style={[styles.pillText, { color: p.text }]}>{p.label}</Text>
+                      </View>
+                    </View>
+                    <Pressable onPress={() => setDetailSession(null)} style={styles.detailCloseBtn}>
+                      <Text style={styles.detailCloseText}>✕</Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Details */}
+                  <View style={styles.detailGrid}>
+                    <Meta icon="📅" label="Date" value={formatDate(schedMs)} />
+                    <Meta icon="🕒" label="Time" value={formatTime(schedMs)} />
+                    <Meta icon="🛣️" label="Road" value={isConfirmed ? "Pending" : ((ds as any).road_type || "Secondary")} />
+                    {!isConfirmed && ds.duration_min ? (
+                      <Meta icon="⏱️" label="Duration" value={`${ds.duration_min} min`} />
+                    ) : null}
+                    {ds.notes ? <Meta icon="📝" label="Notes" value={ds.notes} /> : null}
+                  </View>
+
+                  {/* Actions */}
+                  <View style={styles.detailActions}>
+                    {canStart && (
+                      <Pressable
+                        onPress={() => {
+                          setDetailSession(null);
+                          if (isConfirmed && ds.booking_id) promptRoadType(ds.booking_id);
+                          else if (ds.session_id) promptRoadType(ds.session_id);
+                        }}
+                        style={({ pressed }) => [styles.detailActionBtn, pressed && { opacity: 0.9 }]}
+                      >
+                        <Text style={styles.actionBtnText}>Start Session</Text>
+                      </Pressable>
+                    )}
+
+                    {ds.status === "active" && ds.session_id && (
+                      <Pressable
+                        disabled={!!endingId}
+                        onPress={() => {
+                          setDetailSession(null);
+                          endSession(ds.session_id!);
+                        }}
+                        style={({ pressed }) => [
+                          styles.detailActionBtnEnd,
+                          !!endingId && styles.actionBtnDisabled,
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        <Text style={styles.actionBtnText}>{isEndingThis ? "Ending…" : "End Session"}</Text>
+                      </Pressable>
+                    )}
+
+                    {!isConfirmed && ds.session_id && (
+                      <Pressable
+                        onPress={() => {
+                          setDetailSession(null);
+                          openReport(ds.session_id!);
+                        }}
+                        disabled={!!endingId || !!generatingId}
+                        style={({ pressed }) => [
+                          styles.detailActionBtnOutline,
+                          (!!endingId || !!generatingId) && styles.actionBtnDisabled,
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        <Text style={styles.actionBtnOutlineText}>View Analysis</Text>
+                      </Pressable>
+                    )}
+
+                    {ds.status === "completed" && ds.session_id && (
+                      <Pressable
+                        disabled={!!generatingId || !!endingId}
+                        onPress={() => {
+                          setDetailSession(null);
+                          openGenerateModal(ds.session_id!);
+                        }}
+                        style={({ pressed }) => [
+                          styles.detailActionBtnGenerate,
+                          (!!generatingId || !!endingId) && styles.actionBtnDisabled,
+                          isGeneratingThis && { opacity: 0.6 },
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        <Text style={styles.actionBtnText}>
+                          {isGeneratingThis ? "Generating…" : "Generate Report"}
+                        </Text>
+                      </Pressable>
+                    )}
+                  </View>
+                </>
+              );
+            })()}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* Post-end / Generate Report Modal */}
       <Modal
         visible={!!postEndModal}
@@ -1004,8 +904,6 @@ const styles = StyleSheet.create({
   sectionTitle: { color: "#101828", fontWeight: "900", fontSize: 13 },
   muted: { marginTop: 8, color: "#667085", fontWeight: "800", fontSize: 12 },
   mutedSmall: { marginTop: 6, color: "#667085", fontWeight: "800", fontSize: 11 },
-  warnTitle: { color: "#B91C1C", fontWeight: "900", marginTop: 6 },
-
   liveRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   liveLabel: { color: "#667085", fontWeight: "900" },
   liveId: { flex: 1, color: "#101828", fontWeight: "900" },
@@ -1020,49 +918,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   endBtnText: { color: "#fff", fontWeight: "900" },
-
-  pickerWrap: {
-    borderWidth: 1,
-    borderColor: "#EAECF0",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  input: {
-    minHeight: 46,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#EAECF0",
-    backgroundColor: "#F9FAFB",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontWeight: "700",
-    color: "#101828",
-  },
-
-  dtRow: { flexDirection: "row", gap: 10 },
-  dtBtn: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#EAECF0",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-  dtBtnText: { fontWeight: "900", color: "#101828", fontSize: 12 },
-
-  primaryBtn: {
-    minHeight: 52,
-    backgroundColor: "#0B1220",
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 4,
-  },
-  primaryBtnText: { color: "#FFFFFF", fontWeight: "900", fontSize: 13 },
 
   tabsWrap: { flexDirection: "row", backgroundColor: "#EEF2F6", borderRadius: 14, padding: 4, marginBottom: 12 },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: "center" },
@@ -1226,6 +1081,79 @@ const styles = StyleSheet.create({
   empty: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#EAECF0", borderRadius: 16, padding: 16, alignItems: "center" },
   emptyTitle: { color: "#101828", fontWeight: "900", fontSize: 13 },
   emptySub: { marginTop: 6, color: "#667085", fontWeight: "800", fontSize: 12, textAlign: "center" },
+
+  chevron: { fontSize: 20, color: "#98A2B3", fontWeight: "700", marginLeft: 4 },
+
+  // Detail modal
+  detailModalCard: {
+    width: "100%",
+    maxWidth: 500,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    gap: 16,
+  },
+  detailHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
+  detailAvatarLg: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailAvatarText: { color: "#4F46E5", fontWeight: "900", fontSize: 16 },
+  detailName: { color: "#101828", fontWeight: "900", fontSize: 16 },
+  detailCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F2F4F7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailCloseText: { color: "#667085", fontWeight: "900", fontSize: 14 },
+  detailGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+  },
+  detailActions: { flexDirection: "column", gap: 10 },
+  detailActionBtn: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: "#0B1220",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailActionBtnEnd: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: "#E11D48",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailActionBtnOutline: {
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailActionBtnGenerate: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: "#7C3AED",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   // Post-end modal
   modalOverlay: {

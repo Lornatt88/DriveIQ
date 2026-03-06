@@ -54,8 +54,8 @@ def trainee_dashboard(current_user=Depends(require_role("trainee"))):
             "dateISO":       dt.strftime("%Y-%m-%d") if dt else (slot_date or "—"),
             "date_label":    dt.strftime("%b %d, %Y") if dt else (slot_date or "—"),
             "dateLabel":     dt.strftime("%b %d, %Y") if dt else (slot_date or "—"),
-            "time_label":    dt.strftime("%I:%M %p") if dt else (start_time or "—"),
-            "timeLabel":     dt.strftime("%I:%M %p") if dt else (start_time or "—"),
+            "time_label":    dt.strftime("%H:%M") if dt else (start_time or "—"),
+            "timeLabel":     dt.strftime("%H:%M") if dt else (start_time or "—"),
             "instructor":    inst_name,
             "instructor_id": b.get("instructor_id"),
         }
@@ -270,7 +270,7 @@ def instructor_learners(current_user=Depends(require_role("instructor"))):
     learners = list(
         users_col.find(
             {"user_id": {"$in": trainee_ids}, "role": "trainee"},
-            {"_id": 0, "password_hash": 0, "user_id": 1, "name": 1, "email": 1, "role": 1},
+            {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1},
         )
     )
 

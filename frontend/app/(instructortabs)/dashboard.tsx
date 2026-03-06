@@ -235,31 +235,70 @@ function ActiveSessionBanner({ session }: { session: ActiveSession }) {
 
 // ─── Booking Row ─────────────────────────────────────────────────────────────
 
-function BookingRow({ booking, isLast }: { booking: Booking; isLast: boolean }) {
+function BookingCard({ booking }: { booking: Booking }) {
   const { time } = formatBookingDate(booking.slot_date, booking.start_time);
   const label = dayLabel(booking.slot_date);
   const highlight = isToday(booking.slot_date);
+  const countdown = highlight
+    ? "Today"
+    : isTomorrow(booking.slot_date)
+    ? "Tomorrow"
+    : label;
 
   return (
-    <View style={[ds.bookingRow, !isLast && ds.rowBorder]}>
-      <View style={[ds.bookingDateBox, highlight && ds.bookingDateBoxToday]}>
-        <Text style={[ds.bookingDayLabel, highlight && { color: colors.purpleDark }]}>
-          {label}
-        </Text>
-        <Text style={[ds.bookingTime, highlight && { color: colors.purpleDark }]}>{time}</Text>
+    <Pressable
+      onPress={() => router.push("/(instructortabs)/sessions" as any)}
+      style={({ pressed }) => [
+        ds.bookingCard,
+        highlight && ds.bookingCardToday,
+        pressed && { opacity: 0.85 },
+      ]}
+    >
+      <View style={ds.bookingCardTop}>
+        <View style={ds.bookingCardInfo}>
+          <View style={ds.bookingInfoRow}>
+            <Text style={ds.bookingInfoIcon}>👤</Text>
+            <Text style={ds.bookingInfoLabel}>Student</Text>
+          </View>
+          <Text style={ds.bookingInfoValue}>{booking.trainee_name || "—"}</Text>
+        </View>
+        <View style={[ds.bookingCountdownPill, highlight && ds.bookingCountdownToday]}>
+          <Text style={[ds.bookingCountdownText, highlight && { color: colors.purpleDark }]}>
+            {countdown}
+          </Text>
+        </View>
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={ds.bookingName}>{booking.trainee_name || "—"}</Text>
+
+      <View style={ds.bookingCardDetails}>
+        <View style={ds.bookingDetail}>
+          <Text style={ds.bookingDetailIcon}>🗓️</Text>
+          <View>
+            <Text style={ds.bookingDetailLabel}>Date</Text>
+            <Text style={ds.bookingDetailValue}>{label}</Text>
+          </View>
+        </View>
+        <View style={ds.bookingDetail}>
+          <Text style={ds.bookingDetailIcon}>🕑</Text>
+          <View>
+            <Text style={ds.bookingDetailLabel}>Time</Text>
+            <Text style={ds.bookingDetailValue}>{time}</Text>
+          </View>
+        </View>
         {booking.road_type ? (
-          <Text style={ds.bookingMeta}>{booking.road_type} road</Text>
+          <View style={ds.bookingDetail}>
+            <Text style={ds.bookingDetailIcon}>🛣️</Text>
+            <View>
+              <Text style={ds.bookingDetailLabel}>Road</Text>
+              <Text style={ds.bookingDetailValue}>{booking.road_type}</Text>
+            </View>
+          </View>
         ) : null}
       </View>
-      {highlight && (
-        <View style={ds.todayPill}>
-          <Text style={ds.todayPillText}>Today</Text>
-        </View>
-      )}
-    </View>
+
+      <View style={ds.bookingCardFooter}>
+        <Text style={ds.bookingFooterArrow}>View in Sessions →</Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -411,29 +450,33 @@ export default function InstructorDashboard() {
       showsVerticalScrollIndicator={false}
     >
       {/* ── KPI Strip ─────────────────────────────────────────────────── */}
-      <View style={[ds.kpiStrip, isWide && { flexDirection: "row" }]}>
-        <KpiCard
-          label="My Learners"
-          value={String(summary.total_learners)}
-          sub="total enrolled"
-        />
-        <KpiCard
-          label="Sessions Done"
-          value={String(summary.total_sessions)}
-          sub="completed"
-        />
-        <KpiCard
-          label="Avg Score"
-          value={summary.avg_score ? `${summary.avg_score}` : "—"}
-          sub={ratingLabel}
-          accent={summary.avg_score ? scoreColor(summary.avg_score) : undefined}
-        />
-        <KpiCard
-          label="Rating"
-          value={summary.rating ? summary.rating.toFixed(1) : "—"}
-          sub={summary.total_reviews ? `${summary.total_reviews} reviews` : "no reviews yet"}
-          accent={summary.rating >= 4 ? colors.green : undefined}
-        />
+      <View style={[ds.kpiStrip, isWide && ds.kpiStripWide]}>
+        <View style={ds.kpiRow}>
+          <KpiCard
+            label="My Learners"
+            value={String(summary.total_learners)}
+            sub="total enrolled"
+          />
+          <KpiCard
+            label="Sessions Done"
+            value={String(summary.total_sessions)}
+            sub="completed"
+          />
+        </View>
+        <View style={ds.kpiRow}>
+          <KpiCard
+            label="Avg Score"
+            value={summary.avg_score ? `${summary.avg_score}` : "—"}
+            sub={ratingLabel}
+            accent={summary.avg_score ? scoreColor(summary.avg_score) : undefined}
+          />
+          <KpiCard
+            label="Rating"
+            value={summary.rating ? summary.rating.toFixed(1) : "—"}
+            sub={summary.total_reviews ? `${summary.total_reviews} reviews` : "no reviews yet"}
+            accent={summary.rating >= 4 ? colors.green : undefined}
+          />
+        </View>
       </View>
 
       {/* ── Active Session Banner ──────────────────────────────────────── */}
@@ -442,23 +485,23 @@ export default function InstructorDashboard() {
       {/* ── Two-column section on wide screens ────────────────────────── */}
       <View style={[ds.twoCol, isWide && { flexDirection: "row", gap: 14 }]}>
 
-        {/* Upcoming Bookings */}
-        <View style={[card.base, ds.colCard, isWide && { flex: 1 }]}>
+        {/* Upcoming Sessions */}
+        <View style={[ds.colSection, isWide && { flex: 1 }]}>
           <SectionHeader
-            title="Upcoming Bookings"
+            title="Upcoming Sessions"
             action="All Sessions →"
             onAction={() => router.push("/(instructortabs)/sessions" as any)}
           />
           {upcomingSorted.length === 0 ? (
-            <EmptyRow text="No upcoming bookings" />
+            <View style={[card.base, ds.colCard]}>
+              <EmptyRow text="No upcoming sessions" />
+            </View>
           ) : (
-            upcomingSorted.map((b, i) => (
-              <BookingRow
-                key={b.booking_id}
-                booking={b}
-                isLast={i === upcomingSorted.length - 1}
-              />
-            ))
+            <View style={{ gap: 10 }}>
+              {upcomingSorted.map((b) => (
+                <BookingCard key={b.booking_id} booking={b} />
+              ))}
+            </View>
           )}
         </View>
 
@@ -540,7 +583,14 @@ function GuideStep({ n, text }: { n: string; text: string }) {
 const ds = StyleSheet.create({
   // ── KPI strip
   kpiStrip: {
-    flexDirection: "column",
+    gap: 10,
+  },
+  kpiStripWide: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  kpiRow: {
+    flexDirection: "row",
     gap: 10,
   },
   kpiCard: {
@@ -671,48 +721,96 @@ const ds = StyleSheet.create({
     textAlign: "center",
   },
 
-  // ── Booking row
-  bookingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
+  // ── Upcoming session card
+  colSection: {
+    gap: 10,
+  },
+  bookingCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: colors.cardBg,
+    padding: 14,
     gap: 12,
   },
-  bookingDateBox: {
-    width: 72,
-    alignItems: "flex-start",
+  bookingCardToday: {
+    borderColor: colors.purpleBorder,
+    backgroundColor: colors.purpleLight,
   },
-  bookingDateBoxToday: {},
-  bookingDayLabel: {
+  bookingCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  bookingCardInfo: {
+    flex: 1,
+  },
+  bookingInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 2,
+  },
+  bookingInfoIcon: {
     fontSize: 12,
-    fontWeight: "800",
+  },
+  bookingInfoLabel: {
+    fontSize: 11,
+    fontWeight: "700",
     color: colors.subtext,
   },
-  bookingTime: {
-    fontSize: 15,
+  bookingInfoValue: {
+    fontSize: 14,
     fontWeight: "900",
     color: colors.text,
-    marginTop: 1,
   },
-  bookingName: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  bookingMeta: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.subtext,
-    marginTop: 1,
-  },
-  todayPill: {
-    backgroundColor: colors.purpleLight ?? "#EDE9FE",
+  bookingCountdownPill: {
+    backgroundColor: "#F1F5F9",
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  todayPillText: {
+  bookingCountdownToday: {
+    backgroundColor: "#EDE9FE",
+  },
+  bookingCountdownText: {
     fontSize: 11,
+    fontWeight: "800",
+    color: colors.subtext,
+  },
+  bookingCardDetails: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  bookingDetail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minWidth: 100,
+  },
+  bookingDetailIcon: {
+    fontSize: 16,
+  },
+  bookingDetailLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.subtext,
+  },
+  bookingDetailValue: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: colors.text,
+    marginTop: 1,
+  },
+  bookingCardFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    paddingTop: 10,
+    alignItems: "flex-end",
+  },
+  bookingFooterArrow: {
+    fontSize: 12,
     fontWeight: "800",
     color: colors.purpleDark,
   },

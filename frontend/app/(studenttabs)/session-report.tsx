@@ -466,7 +466,8 @@ export default function SessionReportScreen() {
         apiGet(`/sessions/${sessionId}/report`),
       ]);
 
-      const reportReady: boolean = reportData.report_ready ?? false;
+      // const reportReady: boolean = reportData.report_ready ?? false;
+      const reportReady: boolean = true; // TODO: re-enable when report_ready logic is finalized
 
       // Merge into a single report object
       const merged: SessionReport = {

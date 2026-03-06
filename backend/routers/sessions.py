@@ -127,6 +127,13 @@ def list_sessions(current_user=Depends(get_current_user)):
         for b in pending_bookings:
             slot_date = b.get("slot_date", "")
             start_time = b.get("start_time", "00:00")
+            # start_time may be "09:00" or a full ISO datetime
+            if "T" in start_time:
+                scheduled_at = start_time
+            elif slot_date:
+                scheduled_at = f"{slot_date}T{start_time}"
+            else:
+                scheduled_at = start_time
             sessions.append({
                 "session_id": None,
                 "booking_id": b["booking_id"],
@@ -134,7 +141,7 @@ def list_sessions(current_user=Depends(get_current_user)):
                 "trainee_name": b.get("trainee_name", ""),
                 "instructor_id": instructor_id,
                 "status": "confirmed",
-                "scheduled_at": f"{slot_date}T{start_time}",
+                "scheduled_at": scheduled_at,
                 "vehicle_id": None,
                 "created_at": b.get("created_at"),
             })
@@ -262,7 +269,7 @@ def session_report(session_id: str, current_user=Depends(get_current_user)):
     time_str = "—"
     if hasattr(created, "strftime"):
         date_str = created.strftime("%b %d, %Y")
-        time_str = created.strftime("%I:%M %p")
+        time_str = created.strftime("%H:%M")
 
     analysis = {}
     ai_feedback = []
